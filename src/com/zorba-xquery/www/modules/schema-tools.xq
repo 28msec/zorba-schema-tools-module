@@ -74,7 +74,7 @@ declare option ver:module-version "1.0";
  :)
 declare function schema-tools:inst2xsd ($instances as element()*, $options as element(),
 		$classpath as xs:string*)
- as xs:string external;
+ as document-node()* external;
 
 
 (:~

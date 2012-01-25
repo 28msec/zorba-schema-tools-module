@@ -50,10 +50,12 @@ class Inst2xsdFunction : public NonContextualExternalFunction
   private:
     const ExternalModule* theModule;
     ItemFactory* theFactory;
+		XmlDataManager* theDataManager;
 
 	public:
 		Inst2xsdFunction(const ExternalModule* aModule) :
-			theModule(aModule), theFactory(Zorba::getInstance(0)->getItemFactory())
+			theModule(aModule), theFactory(Zorba::getInstance(0)->getItemFactory()),
+			theDataManager(Zorba::getInstance(0)->getXmlDataManager())
 		{}
 
 		~Inst2xsdFunction()
@@ -343,240 +345,6 @@ ItemSequence_t FindXMLBeansFunction::evaluate(
 	return ItemSequence_t(new VectorItemSequence(lClassPath));
 }
 
-/*
-// this works fine
-ItemSequence_t Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args) const
-{
-  Item classPathItem;
-  // assemble classpath (list of path concatenated with ":" or ";")
-  Iterator_t lIter = args[2]->getIterator();
-  lIter->open();
-  std::ostringstream lClassPath;
-  while (lIter->next(classPathItem))
-  {
-    lClassPath << classPathItem.getStringValue() << File::getPathSeparator();
-  }
-
-	lIter->close();
-
-  lIter = args[0]->getIterator();
-  lIter->open();
-  Item outputFormat;
-  lIter->next(outputFormat);
-  lIter->close();
-  jthrowable lException = 0;
-  static JNIEnv* env;
-
-	try
-	{
-    env = JavaVMSingelton::getInstance(lClassPath.str().c_str())->getEnv();
-    jstring outFotmatString = env->NewStringUTF(outputFormat.getStringValue().c_str());
-    // Local variables
-    std::ostringstream os;
-    Zorba_SerializerOptions_t lOptions;
-    Serializer_t lSerializer = Serializer::createSerializer(lOptions);
-		jclass inst2XsdClass;
-		jobject inst2XsdObject;
-		jmethodID inst2XsdMainMethod;
-		jclass byteArrayOutputStreamClass;
-    jobject byteArrayOutputStream;
-//    jobject fop;
-//    jmethodID newFop;
-//    jclass transformerFactoryClass;
-//    jobject transformerFactory;
-//    jobject transormer;
-    jclass stringReaderClass;
-    jobject stringReader;
-    jstring xmlUTF;
-    const char* xml;
-    std::string xmlString;
-		jclass streamSourceClass;
-    jobject streamSource;
-    jobject defaultHandler;
-    jclass saxResultClass;
-    jobject saxResult;
-    jboolean isCopy;
-    jbyteArray res;
-    Item base64;
-    String resStore;
-    jsize dataSize;
-		jbyte* dataElements;
-
-
-		jclass intArrCls = env->FindClass("[Ljava/lang/String;");
-		if (intArrCls == NULL)
-		{
-			return NULL; // exception thrown
-		}
-		int size = 0;
-
-		jstring tmp[size];  // make sure it is large enough!
-		int j;
-		jobjectArray sarr = env->NewObjectArray(size, intArrCls, NULL);
-
-		if (sarr == NULL)
-		{
-				return NULL; // out of memory error thrown
-		}
-
-		for (j = 0; j < size; j++)
-		{
-			//tmp[j] = i + j;
-		}
-		//env->SetObjectArrayRegion(sarr, 0, size, tmp);
-
-
-    Item item;
-    lIter = args[1]->getIterator();
-    lIter->open();
-    lIter->next(item);
-    lIter->close();
-    // Searialize Item
-    SingletonItemSequence lSequence(item);
-    lSerializer->serialize(&lSequence, os);
-    xmlString = os.str();
-    xml = xmlString.c_str();
-
-    // Create an OutputStream
-    byteArrayOutputStreamClass = env->FindClass("java/io/ByteArrayOutputStream");
-    CHECK_EXCEPTION(env);
-    byteArrayOutputStream = env->NewObject(byteArrayOutputStreamClass,
-        env->GetMethodID(byteArrayOutputStreamClass, "<init>", "()V"));
-    CHECK_EXCEPTION(env);
-
-		// Create a Inst2Xsd class
-		inst2XsdClass = env->FindClass("org/apache/xmlbeans/impl/inst2xsd/Inst2Xsd");
-    CHECK_EXCEPTION(env);
-		inst2XsdMainMethod = env->GetStaticMethodID(inst2XsdClass, "main", "([Ljava/lang/String;)V");
-    CHECK_EXCEPTION(env);
-		env->CallStaticVoidMethod(inst2XsdClass, inst2XsdMainMethod, sarr);
-    CHECK_EXCEPTION(env);
-
-//    // Create the Fop
-//    newFop = env->GetMethodID(fopFactoryClass, "newFop",
-//      "(Ljava/lang/String;Ljava/io/OutputStream;)Lorg/apache/fop/apps/Fop;");
-//    CHECK_EXCEPTION(env);
-//    fop = env->CallObjectMethod(fopFactory,
-//        newFop,
-//        outFotmatString, byteArrayOutputStream);
-//    CHECK_EXCEPTION(env);
-
-//    // Create the Transformer
-//    transformerFactoryClass = env->FindClass("javax/xml/transform/TransformerFactory");
-//    CHECK_EXCEPTION(env);
-//    transformerFactory = env->CallStaticObjectMethod(transformerFactoryClass,
-//        env->GetStaticMethodID(transformerFactoryClass, "newInstance",
-//        "()Ljavax/xml/transform/TransformerFactory;"));
-//    CHECK_EXCEPTION(env);
-//    transormer = env->CallObjectMethod(transformerFactory,
-//        env->GetMethodID(transformerFactoryClass, "newTransformer",
-//        "()Ljavax/xml/transform/Transformer;"));
-//    CHECK_EXCEPTION(env);
-
-//    // Create Source
-//    xmlUTF = env->NewStringUTF(xml);
-//    stringReaderClass = env->FindClass("java/io/StringReader");
-//    CHECK_EXCEPTION(env);
-//    stringReader = env->NewObject(stringReaderClass,
-//        env->GetMethodID(stringReaderClass, "<init>", "(Ljava/lang/String;)V"), xmlUTF);
-//    CHECK_EXCEPTION(env);
-//    streamSourceClass = env->FindClass("javax/xml/transform/stream/StreamSource");
-//    CHECK_EXCEPTION(env);
-//    streamSource = env->NewObject(streamSourceClass,
-//        env->GetMethodID(streamSourceClass, "<init>", "(Ljava/io/Reader;)V"), stringReader);
-//    CHECK_EXCEPTION(env);
-
-//    // Create the SAXResult
-//    defaultHandler = env->CallObjectMethod(fop,
-//        env->GetMethodID(env->FindClass("org/apache/fop/apps/Fop"), "getDefaultHandler",
-//          "()Lorg/xml/sax/helpers/DefaultHandler;"));
-//    CHECK_EXCEPTION(env);
-//    saxResultClass = env->FindClass("javax/xml/transform/sax/SAXResult");
-//    CHECK_EXCEPTION(env);
-//    saxResult = env->NewObject(saxResultClass,
-//        env->GetMethodID(saxResultClass, "<init>", "(Lorg/xml/sax/ContentHandler;)V"),
-//        defaultHandler);
-//    CHECK_EXCEPTION(env);
-
-//    // Transform
-//    env->CallObjectMethod(transormer,
-//        env->GetMethodID(env->FindClass("javax/xml/transform/Transformer"),
-//          "transform",
-//          "(Ljavax/xml/transform/Source;Ljavax/xml/transform/Result;)V"),
-//        streamSource, saxResult);
-//    CHECK_EXCEPTION(env);
-
-    // Close outputstream
-    env->CallObjectMethod(byteArrayOutputStream,
-        env->GetMethodID(env->FindClass("java/io/OutputStream"),
-          "close", "()V"));
-    CHECK_EXCEPTION(env);
-    saxResultClass = env->FindClass("javax/xml/transform/sax/SAXResult");
-    CHECK_EXCEPTION(env);
-
-    // Get the byte array
-    res = (jbyteArray) env->CallObjectMethod(byteArrayOutputStream,
-        env->GetMethodID(byteArrayOutputStreamClass, "toByteArray", "()[B"));
-    CHECK_EXCEPTION(env);
-
-    // Create the result
-    dataSize = env->GetArrayLength(res);
-    dataElements = env->GetByteArrayElements(res, &isCopy);
-
-    std::string lBinaryString((const char*) dataElements, dataSize);
-    std::stringstream lStream(lBinaryString);
-    String base64S = encoding::Base64::encode(lStream);
-    Item lRes = theFactory->createBase64Binary(base64S.c_str(), base64S.length());
-
-		return ItemSequence_t(new SingletonItemSequence(lRes));
-  } 
-  catch (VMOpenException&) 
-  {
-    Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
-        "VM001");
-    throw USER_EXCEPTION(lQName, "Could not start the Java VM (is the classpath set?)");
-  } 
-  catch (JavaException&) 
-  {
-    jclass stringWriterClass = env->FindClass("java/io/StringWriter");
-    jclass printWriterClass = env->FindClass("java/io/PrintWriter");
-    jclass throwableClass = env->FindClass("java/lang/Throwable");
-    jobject stringWriter = env->NewObject(
-        stringWriterClass,
-        env->GetMethodID(stringWriterClass, "<init>", "()V"));
-
-    jobject printWriter = env->NewObject(
-        printWriterClass, 
-        env->GetMethodID(printWriterClass, "<init>", "(Ljava/io/Writer;)V"), 
-        stringWriter);
-
-    env->CallObjectMethod(lException, 
-        env->GetMethodID(throwableClass, "printStackTrace", 
-            "(Ljava/io/PrintWriter;)V"), 
-        printWriter);
-
-    //env->CallObjectMethod(printWriter, env->GetMethodID(printWriterClass, "flush", "()V"));
-    jmethodID toStringMethod = 
-      env->GetMethodID(stringWriterClass, "toString", "()Ljava/lang/String;");
-    jobject errorMessageObj = env->CallObjectMethod(
-        stringWriter, toStringMethod);
-    jstring errorMessage = (jstring) errorMessageObj;
-    const char *errMsg = env->GetStringUTFChars(errorMessage, 0);
-    std::stringstream s;
-    s << "A Java Exception was thrown:" << std::endl << errMsg;
-    env->ReleaseStringUTFChars(errorMessage, errMsg);
-    std::string err("");
-    err += s.str();
-    env->ExceptionClear();
-    Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
-        "JAVA-EXCEPTION");
-    throw USER_EXCEPTION(lQName, err);
-  }
-
-  return ItemSequence_t(new EmptySequence());
-}
-*/
-
 
 ItemSequence_t Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args) const
 {
@@ -657,6 +425,7 @@ ItemSequence_t Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& a
 		//std::cout << "  GetArrayLength: '" << resStrArraySize << "'" << std::endl; std::cout.flush();
 		std::vector<Item> vec;
 
+
 		for( jsize i=0; i<resStrArraySize; i++)
 		{
 			jobject resStr = env->GetObjectArrayElement(resStrArray, i);
@@ -670,7 +439,9 @@ ItemSequence_t Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& a
 			env->ReleaseStringUTFChars( (jstring)resStr, str);
 			//std::cout << "  lBinaryString '" << lBinaryString << "'" << std::endl; std::cout.flush();
 
-			Item lRes = theFactory->createString(lBinaryString);
+			std::stringstream lStream(lBinaryString);
+			Item lRes = theDataManager->parseXML(lStream);
+			//Item lRes = theFactory->createString(lBinaryString);
 
 			vec.push_back(lRes);
 		}
