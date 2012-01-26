@@ -79,10 +79,12 @@ class Xsd2instFunction : public NonContextualExternalFunction
 	private:
 		const ExternalModule* theModule;
 		ItemFactory* theFactory;
+		XmlDataManager* theDataManager;
 
 	public:
 		Xsd2instFunction(const ExternalModule* aModule) :
-			theModule(aModule), theFactory(Zorba::getInstance(0)->getItemFactory())
+			theModule(aModule), theFactory(Zorba::getInstance(0)->getItemFactory()),
+			theDataManager(Zorba::getInstance(0)->getXmlDataManager())
 		{}
 
 		~Xsd2instFunction()
@@ -400,10 +402,10 @@ ItemSequence_t Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& a
 		jclass strCls = env->FindClass("Ljava/lang/String;");
 		CHECK_EXCEPTION(env);
 		jobjectArray jXmlStrArray = env->NewObjectArray(xmlUtfVec.size(), strCls, NULL);
-		std::cout << "  NewObjectArray: '" << jXmlStrArray << "'" << std::endl; std::cout.flush();
+		//std::cout << "  NewObjectArray: '" << jXmlStrArray << "'" << std::endl; std::cout.flush();
 		CHECK_EXCEPTION(env);
 
-		for ( jsize i = 0; i<xmlUtfVec.size(); i++)
+		for ( jsize i = 0; i<(jsize)xmlUtfVec.size(); i++)
 		{
 			env->SetObjectArrayElement(jXmlStrArray, i, xmlUtfVec[i]);
 			CHECK_EXCEPTION(env);
@@ -411,12 +413,12 @@ ItemSequence_t Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& a
 			CHECK_EXCEPTION(env);
 		}
 
-		// Create a Main class
-		myClass = env->FindClass("Main");
+		// Create a Inst2XsdHelper class
+		myClass = env->FindClass("Inst2XsdHelper");
 		CHECK_EXCEPTION(env);
 		myMethod = env->GetStaticMethodID(myClass, "inst2xsd", "([Ljava/lang/String;)[Ljava/lang/String;");
 		CHECK_EXCEPTION(env);
-		jobjectArray resStrArray = (jobjectArray) env->CallStaticObjectMethod(myClass, myMethod, jXmlStrArray/*xmlUTF*/);
+		jobjectArray resStrArray = (jobjectArray) env->CallStaticObjectMethod(myClass, myMethod, jXmlStrArray);
 		CHECK_EXCEPTION(env);
 		//std::cout << "  CallStaticObjectMethod: '" << jXmlStrArray << "'" << std::endl; std::cout.flush();
 
@@ -441,7 +443,6 @@ ItemSequence_t Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& a
 
 			std::stringstream lStream(lBinaryString);
 			Item lRes = theDataManager->parseXML(lStream);
-			//Item lRes = theFactory->createString(lBinaryString);
 
 			vec.push_back(lRes);
 		}
@@ -510,151 +511,99 @@ ItemSequence_t Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& a
 
 	lIter->close();
 
-	lIter = args[0]->getIterator();
-	lIter->open();
-	Item outputFormat;
-	lIter->next(outputFormat);
-	lIter->close();
+//	lIter = args[0]->getIterator();
+//	lIter->open();
+//	Item outputFormat;
+//	lIter->next(outputFormat);
+//	lIter->close();
 	jthrowable lException = 0;
 	static JNIEnv* env;
 
 	try
 	{
 		env = JavaVMSingelton::getInstance(lClassPath.str().c_str())->getEnv();
-		jstring outFotmatString = env->NewStringUTF(outputFormat.getStringValue().c_str());
+
+		//jstring outFotmatString = env->NewStringUTF(outputFormat.getStringValue().c_str());
+
 		// Local variables
 		std::ostringstream os;
 		Zorba_SerializerOptions_t lOptions;
+		lOptions.omit_xml_declaration = ZORBA_OMIT_XML_DECLARATION_YES;
 		Serializer_t lSerializer = Serializer::createSerializer(lOptions);
-		jclass fopFactoryClass;
-		jobject fopFactory;
-		jmethodID fopFactoryNewInstance;
-		jclass byteArrayOutputStreamClass;
-		jobject byteArrayOutputStream;
-		jobject fop;
-		jmethodID newFop;
-		jclass transformerFactoryClass;
-		jobject transformerFactory;
-		jobject transormer;
-		jclass stringReaderClass;
-		jobject stringReader;
-		jstring xmlUTF;
+
 		const char* xml;
 		std::string xmlString;
-		jclass streamSourceClass;
-		jobject streamSource;
-		jobject defaultHandler;
-		jclass saxResultClass;
-		jobject saxResult;
-		jboolean isCopy;
-		jbyteArray res;
-		Item base64;
-		String resStore;
-		jsize dataSize;
-		jbyte* dataElements;
+
+		// read input param 0
+		lIter = args[0]->getIterator();
+		lIter->open();
 
 		Item item;
+		std::vector<jstring> xmlUtfVec;
+
+		while( lIter->next(item) )
+		{
+			// Searialize Item
+			std::ostringstream os;
+			SingletonItemSequence lSequence(item);
+			lSerializer->serialize(&lSequence, os);
+			std::string xmlString = os.str();
+			const char* xml = xmlString.c_str();
+			//std::cout << "  xmlString: '" << xml << "'" << std::endl; std::cout.flush();
+			xmlUtfVec.push_back( env->NewStringUTF(xml) );
+			CHECK_EXCEPTION(env);
+		}
+
+		lIter->close();
+
+
+		// Create String[]
+		jclass strCls = env->FindClass("Ljava/lang/String;");
+		CHECK_EXCEPTION(env);
+		jobjectArray jXmlStrArray = env->NewObjectArray(xmlUtfVec.size(), strCls, NULL);
+		//std::cout << "  NewObjectArray: '" << jXmlStrArray << "'" << std::endl; std::cout.flush();
+		CHECK_EXCEPTION(env);
+
+		for ( jsize i = 0; i<(jsize)xmlUtfVec.size(); i++)
+		{
+			env->SetObjectArrayElement(jXmlStrArray, i, xmlUtfVec[i]);
+			CHECK_EXCEPTION(env);
+			env->DeleteLocalRef((jstring)xmlUtfVec[i]);
+			CHECK_EXCEPTION(env);
+		}
+
+		// Get and create 2nd param rootName string in jStrParam2
 		lIter = args[1]->getIterator();
 		lIter->open();
 		lIter->next(item);
 		lIter->close();
-		// Searialize Item
+		//   Searialize Item
 		SingletonItemSequence lSequence(item);
 		lSerializer->serialize(&lSequence, os);
 		xmlString = os.str();
 		xml = xmlString.c_str();
+		jstring jStrParam2 = env->NewStringUTF(xml);
 
-		// Create an OutputStream
-		byteArrayOutputStreamClass = env->FindClass("java/io/ByteArrayOutputStream");
+		// Create a Inst2XsdHelper class
+		jclass myClass = env->FindClass("Xsd2InstHelper");
 		CHECK_EXCEPTION(env);
-		byteArrayOutputStream = env->NewObject(byteArrayOutputStreamClass,
-				env->GetMethodID(byteArrayOutputStreamClass, "<init>", "()V"));
+		jmethodID myMethod = env->GetStaticMethodID(myClass, "xsd2inst", "([Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
 		CHECK_EXCEPTION(env);
+		jobject resStr = (jobjectArray) env->CallStaticObjectMethod(myClass, myMethod, jXmlStrArray, jStrParam2);
+		CHECK_EXCEPTION(env);
+		//std::cout << "  CallStaticObjectMethod: '" << resStr << "'" << std::endl; std::cout.flush();
 
-		// Create a FopFactory instance
-		fopFactoryClass = env->FindClass("org/apache/fop/apps/FopFactory");
-		CHECK_EXCEPTION(env);
-		fopFactoryNewInstance = env->GetStaticMethodID(fopFactoryClass, "newInstance",
-				"()Lorg/apache/fop/apps/FopFactory;");
-		CHECK_EXCEPTION(env);
-		fopFactory = env->CallStaticObjectMethod(fopFactoryClass, fopFactoryNewInstance);
+		const char *str;
+		str = env->GetStringUTFChars( (jstring)resStr, NULL);
 		CHECK_EXCEPTION(env);
 
-		// Create the Fop
-		newFop = env->GetMethodID(fopFactoryClass, "newFop",
-				"(Ljava/lang/String;Ljava/io/OutputStream;)Lorg/apache/fop/apps/Fop;");
-		CHECK_EXCEPTION(env);
-		fop = env->CallObjectMethod(fopFactory,
-				newFop,
-				outFotmatString, byteArrayOutputStream);
-		CHECK_EXCEPTION(env);
+		std::string lBinaryString(str);
 
-		// Create the Transformer
-		transformerFactoryClass = env->FindClass("javax/xml/transform/TransformerFactory");
-		CHECK_EXCEPTION(env);
-		transformerFactory = env->CallStaticObjectMethod(transformerFactoryClass,
-				env->GetStaticMethodID(transformerFactoryClass, "newInstance",
-															 "()Ljavax/xml/transform/TransformerFactory;"));
-		CHECK_EXCEPTION(env);
-		transormer = env->CallObjectMethod(transformerFactory,
-				env->GetMethodID(transformerFactoryClass, "newTransformer",
-												 "()Ljavax/xml/transform/Transformer;"));
-		CHECK_EXCEPTION(env);
+		env->ReleaseStringUTFChars( (jstring)resStr, str);
+		//std::cout << "  lBinaryString '" << lBinaryString << "'" << std::endl; std::cout.flush();
 
-		// Create Source
-		xmlUTF = env->NewStringUTF(xml);
-		stringReaderClass = env->FindClass("java/io/StringReader");
-		CHECK_EXCEPTION(env);
-		stringReader = env->NewObject(stringReaderClass,
-				env->GetMethodID(stringReaderClass, "<init>", "(Ljava/lang/String;)V"), xmlUTF);
-		CHECK_EXCEPTION(env);
-		streamSourceClass = env->FindClass("javax/xml/transform/stream/StreamSource");
-		CHECK_EXCEPTION(env);
-		streamSource = env->NewObject(streamSourceClass,
-				env->GetMethodID(streamSourceClass, "<init>", "(Ljava/io/Reader;)V"), stringReader);
-		CHECK_EXCEPTION(env);
-
-		// Create the SAXResult
-		defaultHandler = env->CallObjectMethod(fop,
-				env->GetMethodID(env->FindClass("org/apache/fop/apps/Fop"), "getDefaultHandler",
-					"()Lorg/xml/sax/helpers/DefaultHandler;"));
-		CHECK_EXCEPTION(env);
-		saxResultClass = env->FindClass("javax/xml/transform/sax/SAXResult");
-		CHECK_EXCEPTION(env);
-		saxResult = env->NewObject(saxResultClass,
-				env->GetMethodID(saxResultClass, "<init>", "(Lorg/xml/sax/ContentHandler;)V"),
-				defaultHandler);
-		CHECK_EXCEPTION(env);
-
-		// Transform
-		env->CallObjectMethod(transormer,
-				env->GetMethodID(env->FindClass("javax/xml/transform/Transformer"),
-					"transform",
-					"(Ljavax/xml/transform/Source;Ljavax/xml/transform/Result;)V"),
-				streamSource, saxResult);
-		CHECK_EXCEPTION(env);
-
-		// Close outputstream
-		env->CallObjectMethod(byteArrayOutputStream,
-				env->GetMethodID(env->FindClass("java/io/OutputStream"),
-					"close", "()V"));
-		CHECK_EXCEPTION(env);
-		saxResultClass = env->FindClass("javax/xml/transform/sax/SAXResult");
-		CHECK_EXCEPTION(env);
-
-		// Get the byte array
-		res = (jbyteArray) env->CallObjectMethod(byteArrayOutputStream,
-				env->GetMethodID(byteArrayOutputStreamClass, "toByteArray", "()[B"));
-		CHECK_EXCEPTION(env);
-
-		// Create the result
-		dataSize = env->GetArrayLength(res);
-		dataElements = env->GetByteArrayElements(res, &isCopy);
-
-		std::string lBinaryString((const char*) dataElements, dataSize);
 		std::stringstream lStream(lBinaryString);
-		String base64S = encoding::Base64::encode(lStream);
-		Item lRes = theFactory->createBase64Binary(base64S.c_str(), base64S.length());
+		Item lRes = theDataManager->parseXML(lStream);
 
 		return ItemSequence_t(new SingletonItemSequence(lRes));
 	}
