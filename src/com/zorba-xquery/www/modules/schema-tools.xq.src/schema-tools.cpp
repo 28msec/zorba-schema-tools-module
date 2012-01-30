@@ -45,7 +45,7 @@ namespace zorba
 namespace schematools
 {
  
-class Inst2xsdFunction : public NonContextualExternalFunction
+class Inst2xsdFunction : public ContextualExternalFunction
 {
   private:
     const ExternalModule* theModule;
@@ -55,7 +55,7 @@ class Inst2xsdFunction : public NonContextualExternalFunction
 	public:
 		Inst2xsdFunction(const ExternalModule* aModule) :
 			theModule(aModule), theFactory(Zorba::getInstance(0)->getItemFactory()),
-			theDataManager(Zorba::getInstance(0)->getXmlDataManager())
+      theDataManager(Zorba::getInstance(0)->getXmlDataManager())
 		{}
 
 		~Inst2xsdFunction()
@@ -71,10 +71,12 @@ class Inst2xsdFunction : public NonContextualExternalFunction
 		{ return "inst2xsd"; }
 
     virtual ItemSequence_t 
-			evaluate(const ExternalFunction::Arguments_t& args) const;
+      evaluate(const ExternalFunction::Arguments_t& args,
+               const zorba::StaticContext*,
+               const zorba::DynamicContext*) const;
 };
 
-class Xsd2instFunction : public NonContextualExternalFunction
+class Xsd2instFunction : public ContextualExternalFunction
 {
 	private:
 		const ExternalModule* theModule;
@@ -100,7 +102,9 @@ class Xsd2instFunction : public NonContextualExternalFunction
 		{ return "xsd2inst"; }
 
 		virtual ItemSequence_t
-			evaluate(const ExternalFunction::Arguments_t& args) const;
+      evaluate(const ExternalFunction::Arguments_t& args,
+               const zorba::StaticContext*,
+               const zorba::DynamicContext*) const;
 };
 
 class FindXMLBeansFunction : public NonContextualExternalFunction
@@ -348,26 +352,19 @@ ItemSequence_t FindXMLBeansFunction::evaluate(
 }
 
 
-ItemSequence_t Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args) const
+ItemSequence_t
+Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
+                           const zorba::StaticContext* aStaticContext,
+                           const zorba::DynamicContext* aDynamincContext) const
 {
-	Item classPathItem;
-	// assemble classpath (list of path concatenated with ":" or ";")
-	Iterator_t lIter = args[2]->getIterator();
-	lIter->open();
-	std::ostringstream lClassPath;
-	while (lIter->next(classPathItem))
-	{
-		lClassPath << classPathItem.getStringValue() << File::getPathSeparator();
-	}
-
-	lIter->close();
-
 	jthrowable lException = 0;
 	static JNIEnv* env;
 
 	try
-	{
-		env = JavaVMSingelton::getInstance(lClassPath.str().c_str())->getEnv();
+  {
+    String cp = aStaticContext->getFullJVMClassPath();
+    //std::cout << "Inst2xsdFunction::evaluate: '" << cp << "'" << std::endl; std::cout.flush();
+    env = JavaVMSingelton::getInstance(cp.c_str())->getEnv();
 
 		// Local variables
 		Zorba_SerializerOptions_t lOptions;
@@ -377,7 +374,7 @@ ItemSequence_t Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& a
 		jmethodID myMethod;
 
 		// read input param 0
-		lIter = args[0]->getIterator();
+    Iterator_t lIter = args[0]->getIterator();
 		lIter->open();
 
 		Item item;
@@ -497,7 +494,10 @@ ItemSequence_t Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& a
 
 
 
-ItemSequence_t Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args) const
+ItemSequence_t
+Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
+                           const zorba::StaticContext* aStaticContext,
+                           const zorba::DynamicContext* aDynamicContext) const
 {
 	Item classPathItem;
 	// assemble classpath (list of path concatenated with ":" or ";")
@@ -511,17 +511,14 @@ ItemSequence_t Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& a
 
 	lIter->close();
 
-//	lIter = args[0]->getIterator();
-//	lIter->open();
-//	Item outputFormat;
-//	lIter->next(outputFormat);
-//	lIter->close();
 	jthrowable lException = 0;
 	static JNIEnv* env;
 
 	try
 	{
-		env = JavaVMSingelton::getInstance(lClassPath.str().c_str())->getEnv();
+    String cp = aStaticContext->getFullJVMClassPath();
+    //std::cout << "Xsd2instFunction::evaluate: '" << cp << "'" << std::endl; std::cout.flush();
+    env = JavaVMSingelton::getInstance(cp.c_str())->getEnv();
 
 		//jstring outFotmatString = env->NewStringUTF(outputFormat.getStringValue().c_str());
 

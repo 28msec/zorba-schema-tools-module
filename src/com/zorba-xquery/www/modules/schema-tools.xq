@@ -72,9 +72,9 @@ declare option ver:module-version "1.0";
  : @error schema-tools:VM001 If zorba was unable to start the JVM.
  : @error schema-tools:JAVA-EXCEPTION If Apache XMLBeans throws an exception.
  :)
-declare function schema-tools:inst2xsd ($instances as element()+, $options as element(),
-		$classpath as xs:string*)
- as document-node()* external;
+declare function
+schema-tools:inst2xsd ($instances as element()+, $options as element())
+    as document-node()* external;
 
 
 (:~
@@ -93,9 +93,9 @@ declare function schema-tools:inst2xsd ($instances as element()+, $options as el
  : @error schema-tools:VM001 If zorba was unable to start the JVM.
  : @error schema-tools:JAVA-EXCEPTION If Apache XMLBeans throws an exception.
  :)
-declare function schema-tools:xsd2inst ($schema as element()+, $rootElementName as xs:string,
-    $classpath as xs:string )
- as document-node() external;
+declare function
+schema-tools:xsd2inst ($schema as element()+, $rootElementName as xs:string)
+   as document-node() external;
 
 
 (:~
