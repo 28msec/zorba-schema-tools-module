@@ -39,7 +39,7 @@ module namespace schema-tools = "http://www.zorba-xquery.com/modules/schema-tool
 declare namespace err = "http://www.w3.org/2005/xqt-errors";
 
 declare namespace ver = "http://www.zorba-xquery.com/options/versioning";
-declare option ver:module-version "1.0";
+declare option ver:module-version "0.1";
 
 
 
@@ -56,18 +56,23 @@ declare option ver:module-version "1.0";
  :
  : @param $instances The XML instance elements that will define the schema.
  : @param $options The Inst2XSD options:
- :     * Design
- :         o Russian Doll Design - local elements and local types
- :         o Salami Slice Design - global elements and local types
- :         o Venetian Blind Design - local elements and global complex types (default)
- :      * Simple content types (leafs)
- :         o smart (default) - try to find out the right simple shema type
- :         o always xsd:string
- :      * Use enumeration - when there are multiple valid values in a list
- :         o never
- :         o only if not more than ( 20 ) - number option (default 10)
- : @param $classpath The classpath which has to contain Apache XMLBeans. If you don't
- :        want to set this programmatically, use the generator function without this parameter instead.
+ :      * design: Choose the generated schema design
+ :         - rdd: Russian Doll Design - local elements and local types
+ :         - ssd: Salami Slice Design - global elements and local types
+ :         - vbd (default): Venetian Blind Design - local elements and global complex types
+ :      * simple-content-types: type of leaf nodes
+ :         - smart (default): try to find out the right simple shema type
+ :         - always-string: use xsd:string for all simple types
+ :      * use-enumeration: - when there are multiple valid values in a list
+ :         - 0 or less: never use enumeration
+ :         - 1 or more (default 10): only if not more than the value - number option
+ :
+ :  <options xmlns='http://www.zorba-xquery.com/modules/schema-tools/schemma-tools-options'>
+ :    <design>vbd</design>
+ :    <simple-content-types>smart</simple-content-types>
+ :    <use-enumeration>10</use-enumeration>
+ :  </options>
+ :
  : @return The generated output document, representing a sample XMLSchema.
  : @error schema-tools:VM001 If zorba was unable to start the JVM.
  : @error schema-tools:JAVA-EXCEPTION If Apache XMLBeans throws an exception.
@@ -84,23 +89,31 @@ schema-tools:inst2xsd ($instances as element()+, $options as element())
  :
  : Please consult the 
  : <a href="http://xmlbeans.apache.org/">official documentation for further information</a>.
+ : Example:
  :
- : @param $schemaFileNames The XML Schema file names that define the schema type system.
+ :  let $inst := (<a><b/><c/></a>, <b/>, <c>ccc</c>)
+ :  let $opt  := <xb:options>
+ :                   <xb:design>rdd</xb:design>\
+ :                   <xb:design>rdd</xb:design>\
+ :                   <xb:design>rdd</xb:design>\
+ :               </xb:options>
+ :  return
+ :      xb:inst2xsd($inst, $opt)
+ :
+ : @param $schema The XML Schema file names that define the schema type system.
  : @param $rootElementName The QName of the root element of the instance
- : @param $classpath The classpath which has to contain Apache XMLBeans. If you don't
- :        want to set this programmatically, use the generator function without this parameter instead.
+ : @param $options Options:
+ :       * network-downloads: boolean - if allowed to use network when resolving
+ :                                      schema imports and includes
+ :       * no-pvr: boolean - true to disable particle valid (restriction) rule,
+ :                           false othervise
+ :       * no-upa: boolean - true to disable unique particle attribution rule,
+ :                           false othervise
+ :
  : @return The generated output document, representing a sample XML instance.
  : @error schema-tools:VM001 If zorba was unable to start the JVM.
  : @error schema-tools:JAVA-EXCEPTION If Apache XMLBeans throws an exception.
  :)
 declare function
-schema-tools:xsd2inst ($schema as element()+, $rootElementName as xs:string)
+schema-tools:xsd2inst ($schema as element()+, $rootElementName as xs:string, $options)
    as document-node() external;
-
-
-(:~
- : Find apache XMLBeans library and its dependencies
- : @return The class path for apache XMLBeans and its dependencies.
-
-declare %private function schema-tools:find-xmlbeans() as xs:string+ external;
-:)
