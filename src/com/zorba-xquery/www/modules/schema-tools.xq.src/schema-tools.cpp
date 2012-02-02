@@ -44,7 +44,13 @@ namespace zorba
 {
 namespace schematools
 {
- 
+
+class SchemaToolsModule;
+class Inst2xsdFunction;
+class Xsd2instFunction;
+class STOptions;
+
+
 class Inst2xsdFunction : public ContextualExternalFunction
 {
   private:
@@ -138,6 +144,74 @@ class SchemaToolsModule : public ExternalModule {
     }
 };
 
+
+class STOptions
+{
+public:
+  typedef enum
+  {
+    RUSSIAN_DOLL_DESIGN,
+    SALAMI_SLICE_DESIGN,
+    VENETIAN_BLIND_DESIGN,
+  } design_t;
+
+  typedef enum
+  {
+    SMART_TYPES,
+    ALWAYS_STRING_TYPES,
+  } simple_content_types_t;
+
+
+private:
+  int theDesign;
+  int theSimpleContentType;
+  int theUseEnumeration;
+
+  bool theNetworkDownloads;
+  bool theNoPVR;
+  bool theNoUPA;
+
+public:
+  STOptions() : theDesign(STOptions::VENETIAN_BLIND_DESIGN),
+    theSimpleContentType(STOptions::SMART_TYPES),
+    theUseEnumeration(10),
+    theNetworkDownloads(false), theNoPVR(false), theNoUPA(false)
+  {}
+
+  void parse(Item optionsNode, ItemFactory *itemFactory);
+
+  int getDesign()
+  {
+    return theDesign;
+  }
+
+  int getSimpleContentType()
+  {
+    return theSimpleContentType;
+  }
+
+  int getUseEnumeration()
+  {
+    return theUseEnumeration;
+  }
+
+  bool isNetworkDownloads()
+  {
+    return theNetworkDownloads;
+  }
+
+  bool isNoPVR()
+  {
+    return theNoPVR;
+  }
+
+  bool isNoUPA()
+  {
+    return theNoUPA;
+  }
+};
+
+
 ExternalFunction* SchemaToolsModule::getExternalFunction(const String& localName)
 {
   if (localName == "inst2xsd-internal")
@@ -195,6 +269,17 @@ Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
 		}
 
 		lIter->close();
+
+    // read input parm 1: $options
+    Item optionsItem;
+    Iterator_t arg1Iter = args[1]->getIterator();
+    arg1Iter->open();
+    bool hasOptions = arg1Iter->next(optionsItem);
+    arg1Iter->close();
+
+    STOptions options;
+    if (hasOptions)
+      options.parse(optionsItem, theFactory);
 
 		// Create String[]
 		jclass strCls = env->FindClass("Ljava/lang/String;");
@@ -300,155 +385,292 @@ Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
                            const zorba::StaticContext* aStaticContext,
                            const zorba::DynamicContext* aDynamicContext) const
 {
-	Item classPathItem;
-	// assemble classpath (list of path concatenated with ":" or ";")
-	Iterator_t lIter = args[2]->getIterator();
-	lIter->open();
-	std::ostringstream lClassPath;
-	while (lIter->next(classPathItem))
-	{
-		lClassPath << classPathItem.getStringValue() << File::getPathSeparator();
-	}
+  Item classPathItem;
+  // assemble classpath (list of path concatenated with ":" or ";")
+  Iterator_t lIter = args[2]->getIterator();
+  lIter->open();
+  std::ostringstream lClassPath;
+  while (lIter->next(classPathItem))
+  {
+    lClassPath << classPathItem.getStringValue() << File::getPathSeparator();
+  }
 
-	lIter->close();
+  lIter->close();
 
-	jthrowable lException = 0;
-	static JNIEnv* env;
+  jthrowable lException = 0;
+  static JNIEnv* env;
 
-	try
-	{
+  try
+  {
     String cp = aStaticContext->getFullJVMClassPath();
     //std::cout << "Xsd2instFunction::evaluate: '" << cp << "'" << std::endl; std::cout.flush();
     env = JavaVMSingelton::getInstance(cp.c_str())->getEnv();
 
-		//jstring outFotmatString = env->NewStringUTF(outputFormat.getStringValue().c_str());
+    //jstring outFotmatString = env->NewStringUTF(outputFormat.getStringValue().c_str());
 
-		// Local variables
-		std::ostringstream os;
-		Zorba_SerializerOptions_t lOptions;
-		lOptions.omit_xml_declaration = ZORBA_OMIT_XML_DECLARATION_YES;
-		Serializer_t lSerializer = Serializer::createSerializer(lOptions);
+    // Local variables
+    std::ostringstream os;
+    Zorba_SerializerOptions_t lOptions;
+    lOptions.omit_xml_declaration = ZORBA_OMIT_XML_DECLARATION_YES;
+    Serializer_t lSerializer = Serializer::createSerializer(lOptions);
 
-		const char* xml;
-		std::string xmlString;
+    const char* xml;
+    std::string xmlString;
 
-		// read input param 0
-		lIter = args[0]->getIterator();
-		lIter->open();
+    // read input param 0: schemas
+    lIter = args[0]->getIterator();
+    lIter->open();
 
-		Item item;
-		std::vector<jstring> xmlUtfVec;
+    Item item;
+    std::vector<jstring> xmlUtfVec;
 
-		while( lIter->next(item) )
-		{
-			// Searialize Item
-			std::ostringstream os;
-			SingletonItemSequence lSequence(item);
-			lSerializer->serialize(&lSequence, os);
-			std::string xmlString = os.str();
-			const char* xml = xmlString.c_str();
-			//std::cout << "  xmlString: '" << xml << "'" << std::endl; std::cout.flush();
-			xmlUtfVec.push_back( env->NewStringUTF(xml) );
-			CHECK_EXCEPTION(env);
-		}
+    while( lIter->next(item) )
+    {
+      // Searialize Item
+      std::ostringstream os;
+      SingletonItemSequence lSequence(item);
+      lSerializer->serialize(&lSequence, os);
+      std::string xmlString = os.str();
+      const char* xml = xmlString.c_str();
+      //std::cout << "  xmlString: '" << xml << "'" << std::endl; std::cout.flush();
+      xmlUtfVec.push_back( env->NewStringUTF(xml) );
+      CHECK_EXCEPTION(env);
+    }
 
-		lIter->close();
+    lIter->close();
 
 
-		// Create String[]
-		jclass strCls = env->FindClass("Ljava/lang/String;");
-		CHECK_EXCEPTION(env);
-		jobjectArray jXmlStrArray = env->NewObjectArray(xmlUtfVec.size(), strCls, NULL);
-		//std::cout << "  NewObjectArray: '" << jXmlStrArray << "'" << std::endl; std::cout.flush();
-		CHECK_EXCEPTION(env);
+    // Create String[]
+    jclass strCls = env->FindClass("Ljava/lang/String;");
+    CHECK_EXCEPTION(env);
+    jobjectArray jXmlStrArray = env->NewObjectArray(xmlUtfVec.size(), strCls, NULL);
+    //std::cout << "  NewObjectArray: '" << jXmlStrArray << "'" << std::endl; std::cout.flush();
+    CHECK_EXCEPTION(env);
 
-		for ( jsize i = 0; i<(jsize)xmlUtfVec.size(); i++)
-		{
-			env->SetObjectArrayElement(jXmlStrArray, i, xmlUtfVec[i]);
-			CHECK_EXCEPTION(env);
-			env->DeleteLocalRef((jstring)xmlUtfVec[i]);
-			CHECK_EXCEPTION(env);
-		}
+    for ( jsize i = 0; i<(jsize)xmlUtfVec.size(); i++)
+    {
+      env->SetObjectArrayElement(jXmlStrArray, i, xmlUtfVec[i]);
+      CHECK_EXCEPTION(env);
+      env->DeleteLocalRef((jstring)xmlUtfVec[i]);
+      CHECK_EXCEPTION(env);
+    }
 
-		// Get and create 2nd param rootName string in jStrParam2
-		lIter = args[1]->getIterator();
-		lIter->open();
-		lIter->next(item);
-		lIter->close();
-		//   Searialize Item
-		SingletonItemSequence lSequence(item);
-		lSerializer->serialize(&lSequence, os);
-		xmlString = os.str();
-		xml = xmlString.c_str();
-		jstring jStrParam2 = env->NewStringUTF(xml);
+    // Get and create param 1: rootName string in jStrParam2
+    lIter = args[1]->getIterator();
+    lIter->open();
+    lIter->next(item);
+    lIter->close();
+    //   Searialize Item
+    SingletonItemSequence lSequence(item);
+    lSerializer->serialize(&lSequence, os);
+    xmlString = os.str();
+    xml = xmlString.c_str();
+    jstring jStrParam2 = env->NewStringUTF(xml);
 
-		// Create a Inst2XsdHelper class
-		jclass myClass = env->FindClass("Xsd2InstHelper");
-		CHECK_EXCEPTION(env);
-		jmethodID myMethod = env->GetStaticMethodID(myClass, "xsd2inst", "([Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-		CHECK_EXCEPTION(env);
-		jobject resStr = (jobjectArray) env->CallStaticObjectMethod(myClass, myMethod, jXmlStrArray, jStrParam2);
-		CHECK_EXCEPTION(env);
-		//std::cout << "  CallStaticObjectMethod: '" << resStr << "'" << std::endl; std::cout.flush();
+    // read input param 2: $options
+    Item optionsItem;
+    lIter = args[2]->getIterator();
+    lIter->open();
+    bool isOpen = lIter->isOpen();
+    if ( isOpen )
+    {
+      bool hasOptions = lIter->next(optionsItem);
+      lIter->close();
 
-		const char *str;
-		str = env->GetStringUTFChars( (jstring)resStr, NULL);
-		CHECK_EXCEPTION(env);
+      STOptions options;
+      if (hasOptions)
+        options.parse(optionsItem, theFactory);
+    }
 
-		std::string lBinaryString(str);
 
-		env->ReleaseStringUTFChars( (jstring)resStr, str);
-		//std::cout << "  lBinaryString '" << lBinaryString << "'" << std::endl; std::cout.flush();
+    // Create a Inst2XsdHelper class
+    jclass myClass = env->FindClass("Xsd2InstHelper");
+    CHECK_EXCEPTION(env);
+    jmethodID myMethod = env->GetStaticMethodID(myClass, "xsd2inst", "([Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    CHECK_EXCEPTION(env);
+    jobject resStr = (jobjectArray) env->CallStaticObjectMethod(myClass, myMethod, jXmlStrArray, jStrParam2);
+    CHECK_EXCEPTION(env);
+    //std::cout << "  CallStaticObjectMethod: '" << resStr << "'" << std::endl; std::cout.flush();
 
-		std::stringstream lStream(lBinaryString);
-		Item lRes = theDataManager->parseXML(lStream);
+    const char *str;
+    str = env->GetStringUTFChars( (jstring)resStr, NULL);
+    CHECK_EXCEPTION(env);
 
-		return ItemSequence_t(new SingletonItemSequence(lRes));
-	}
-	catch (VMOpenException&)
-	{
-		Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
-				"VM001");
-		throw USER_EXCEPTION(lQName, "Could not start the Java VM (is the classpath set?)");
-	}
-	catch (JavaException&)
-	{
-		jclass stringWriterClass = env->FindClass("java/io/StringWriter");
-		jclass printWriterClass = env->FindClass("java/io/PrintWriter");
-		jclass throwableClass = env->FindClass("java/lang/Throwable");
-		jobject stringWriter = env->NewObject(
-				stringWriterClass,
-				env->GetMethodID(stringWriterClass, "<init>", "()V"));
+    std::string lBinaryString(str);
 
-		jobject printWriter = env->NewObject(
-				printWriterClass,
-				env->GetMethodID(printWriterClass, "<init>", "(Ljava/io/Writer;)V"),
-				stringWriter);
+    env->ReleaseStringUTFChars( (jstring)resStr, str);
+    //std::cout << "  lBinaryString '" << lBinaryString << "'" << std::endl; std::cout.flush();
 
-		env->CallObjectMethod(lException,
-				env->GetMethodID(throwableClass, "printStackTrace",
-						"(Ljava/io/PrintWriter;)V"),
-				printWriter);
+    std::stringstream lStream(lBinaryString);
+    Item lRes = theDataManager->parseXML(lStream);
 
-		//env->CallObjectMethod(printWriter, env->GetMethodID(printWriterClass, "flush", "()V"));
-		jmethodID toStringMethod =
-			env->GetMethodID(stringWriterClass, "toString", "()Ljava/lang/String;");
-		jobject errorMessageObj = env->CallObjectMethod(
-				stringWriter, toStringMethod);
-		jstring errorMessage = (jstring) errorMessageObj;
-		const char *errMsg = env->GetStringUTFChars(errorMessage, 0);
-		std::stringstream s;
-		s << "A Java Exception was thrown:" << std::endl << errMsg;
-		env->ReleaseStringUTFChars(errorMessage, errMsg);
-		std::string err("");
-		err += s.str();
-		env->ExceptionClear();
-		Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
-				"JAVA-EXCEPTION");
-		throw USER_EXCEPTION(lQName, err);
-	}
+    return ItemSequence_t(new SingletonItemSequence(lRes));
+  }
+  catch (VMOpenException&)
+  {
+    Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
+                                          "VM001");
+    throw USER_EXCEPTION(lQName, "Could not start the Java VM (is the classpath set?)");
+  }
+  catch (JavaException&)
+  {
+    jclass stringWriterClass = env->FindClass("java/io/StringWriter");
+    jclass printWriterClass = env->FindClass("java/io/PrintWriter");
+    jclass throwableClass = env->FindClass("java/lang/Throwable");
+    jobject stringWriter = env->NewObject(
+          stringWriterClass,
+          env->GetMethodID(stringWriterClass, "<init>", "()V"));
 
-	return ItemSequence_t(new EmptySequence());
+    jobject printWriter = env->NewObject(
+          printWriterClass,
+          env->GetMethodID(printWriterClass, "<init>", "(Ljava/io/Writer;)V"),
+          stringWriter);
+
+    env->CallObjectMethod(lException,
+                          env->GetMethodID(throwableClass, "printStackTrace",
+                                           "(Ljava/io/PrintWriter;)V"),
+                          printWriter);
+
+    //env->CallObjectMethod(printWriter, env->GetMethodID(printWriterClass, "flush", "()V"));
+    jmethodID toStringMethod =
+        env->GetMethodID(stringWriterClass, "toString", "()Ljava/lang/String;");
+    jobject errorMessageObj = env->CallObjectMethod(
+        stringWriter, toStringMethod);
+    jstring errorMessage = (jstring) errorMessageObj;
+    const char *errMsg = env->GetStringUTFChars(errorMessage, 0);
+    std::stringstream s;
+    s << "A Java Exception was thrown:" << std::endl << errMsg;
+    env->ReleaseStringUTFChars(errorMessage, errMsg);
+    std::string err("");
+    err += s.str();
+    env->ExceptionClear();
+    Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
+                                          "JAVA-EXCEPTION");
+    throw USER_EXCEPTION(lQName, err);
+  }
+
+  return ItemSequence_t(new EmptySequence());
+}
+
+
+
+bool compareItemQName(Item item, const char *localname, const char *ns)
+{
+  int node_kind = item.getNodeKind();
+  if(node_kind != store::StoreConsts::elementNode)
+    return false;
+  Item node_name;
+  item.getNodeName(node_name);
+  String  item_namespace = node_name.getNamespace();
+  if(ns && ns[0] && item_namespace != ns )
+  {
+    return false;
+  }
+  String  item_name = node_name.getLocalName();
+  if(item_name != localname)
+  {
+    return false;
+  }
+  return true;
+}
+
+
+bool getChild(zorba::Iterator_t children, const char *localname, const char *ns,
+                           zorba::Item &child_item);
+bool getChild(zorba::Item &lItem, const char *localname, const char *ns,
+                           zorba::Item &child_item)
+{
+  Iterator_t    children;
+  children = lItem.getChildren();
+  children->open();
+  bool retval = getChild(children, localname, ns, child_item);
+  children->close();
+  return retval;
+}
+
+
+bool getChild(zorba::Iterator_t children, const char *localname, const char *ns,
+              zorba::Item &child_item)
+{
+  while(children->next(child_item))
+  {
+    if(child_item.getNodeKind() != store::StoreConsts::elementNode)
+      continue;
+    Item    child_name;
+    child_item.getNodeName(child_name);
+    String  item_namespace = child_name.getNamespace();
+    if(item_namespace != ns)
+    {
+      continue;//next child
+    }
+    String  item_name = child_name.getLocalName();
+    if(item_name != localname)
+    {
+      continue;//next child
+    }
+    return true;
+  }
+  return false;
+}
+
+void STOptions::parse(Item optionsNode, ItemFactory *itemFactory)
+{
+  if(optionsNode.isNull())
+    return;
+
+  if(!compareItemQName(optionsNode, "options", ""))
+  {
+    std::stringstream lErrorMessage;
+    Item options_qname;
+    optionsNode.getNodeName(options_qname);
+    lErrorMessage << "Options field must be of element options instead of " << options_qname.getStringValue();
+    Item errWrongParamQName;
+    String errName("WrongParam");
+    errWrongParamQName = itemFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE, errName);
+    String errDescription(lErrorMessage.str());
+    throw USER_EXCEPTION(errWrongParamQName, errDescription);
+  }
+
+  zorba::Item child_item;
+  if(getChild(optionsNode, "design", "", child_item))
+  {
+    String design_text = child_item.getStringValue();
+    if ( design_text == "rdd" )
+      theDesign = RUSSIAN_DOLL_DESIGN;
+    else if ( design_text == "ssd" )
+      theDesign = SALAMI_SLICE_DESIGN;
+    else if ( design_text == "vbd" )
+      theDesign = VENETIAN_BLIND_DESIGN;
+  }
+
+  if(getChild(optionsNode, "simple-content-types", "", child_item))
+  {
+    String sct_text = child_item.getStringValue();
+    if ( sct_text == "always-string" )
+      theSimpleContentType = ALWAYS_STRING_TYPES;
+    else if ( sct_text == "smart" )
+      theSimpleContentType = SMART_TYPES;
+  }
+
+  if(getChild(optionsNode, "use-enumeration", "", child_item))
+  {
+    theUseEnumeration = child_item.getIntValue();
+  }
+
+  if(getChild(optionsNode, "network-downloads", "", child_item))
+  {
+    theNetworkDownloads = child_item.getBooleanValue();
+  }
+
+  if(getChild(optionsNode, "no-pvr", "", child_item))
+  {
+    theNoPVR = child_item.getBooleanValue();
+  }
+
+  if(getChild(optionsNode, "no-pvr", "", child_item))
+  {
+    theNoUPA = child_item.getBooleanValue();
+  }
 }
 
 }}; // namespace zorba, schematools
