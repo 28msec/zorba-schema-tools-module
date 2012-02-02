@@ -50,13 +50,14 @@ class Inst2xsdFunction : public ContextualExternalFunction
   private:
     const ExternalModule* theModule;
     ItemFactory* theFactory;
-		XmlDataManager* theDataManager;
+    XmlDataManager* theDataManager;
 
-	public:
-		Inst2xsdFunction(const ExternalModule* aModule) :
-			theModule(aModule), theFactory(Zorba::getInstance(0)->getItemFactory()),
+  public:
+    Inst2xsdFunction(const ExternalModule* aModule) :
+      theModule(aModule),
+      theFactory(Zorba::getInstance(0)->getItemFactory()),
       theDataManager(Zorba::getInstance(0)->getXmlDataManager())
-		{}
+    {}
 
 		~Inst2xsdFunction()
 		{
@@ -68,7 +69,7 @@ class Inst2xsdFunction : public ContextualExternalFunction
 		{ return theModule->getURI(); }
 
 		virtual String getLocalName() const
-		{ return "inst2xsd"; }
+    { return "inst2xsd-internal"; }
 
     virtual ItemSequence_t 
       evaluate(const ExternalFunction::Arguments_t& args,
@@ -85,7 +86,8 @@ class Xsd2instFunction : public ContextualExternalFunction
 
 	public:
 		Xsd2instFunction(const ExternalModule* aModule) :
-			theModule(aModule), theFactory(Zorba::getInstance(0)->getItemFactory()),
+      theModule(aModule),
+      theFactory(Zorba::getInstance(0)->getItemFactory()),
 			theDataManager(Zorba::getInstance(0)->getXmlDataManager())
 		{}
 
@@ -99,7 +101,7 @@ class Xsd2instFunction : public ContextualExternalFunction
 		{ return theModule->getURI(); }
 
 		virtual String getLocalName() const
-		{ return "xsd2inst"; }
+    { return "xsd2inst-internal"; }
 
 		virtual ItemSequence_t
       evaluate(const ExternalFunction::Arguments_t& args,
@@ -107,48 +109,22 @@ class Xsd2instFunction : public ContextualExternalFunction
                const zorba::DynamicContext*) const;
 };
 
-class FindXMLBeansFunction : public NonContextualExternalFunction
-{
-  private:
-    const ExternalModule* theModule;
-    ItemFactory* theFactory;
-
-	private:
-    void throwError(std::string aName) const;
-
-	public:
-		FindXMLBeansFunction(const ExternalModule* aModule) :
-			theModule(aModule), theFactory(Zorba::getInstance(0)->getItemFactory())
-		{}
-
-		virtual String getURI() const
-		{ return theModule->getURI(); }
-
-		virtual String getLocalName() const
-		{ return "find-xmlbeans"; }
-
-    virtual ItemSequence_t 
-			evaluate(const ExternalFunction::Arguments_t& args) const;
-};
 
 class SchemaToolsModule : public ExternalModule {
   private:
 		ExternalFunction* inst2xsd;
 		ExternalFunction* xsd2inst;
-		ExternalFunction* findXMLBeans;
 
 	public:
     SchemaToolsModule() :
 			inst2xsd(new Inst2xsdFunction(this)),
-			xsd2inst(new Xsd2instFunction(this)),
-			findXMLBeans(new FindXMLBeansFunction(this))
+      xsd2inst(new Xsd2instFunction(this))
 		{}
 
 		~SchemaToolsModule()
 		{
 			delete inst2xsd;
 			delete xsd2inst;
-			delete findXMLBeans;
     }
 
 		virtual String getURI() const
@@ -164,191 +140,16 @@ class SchemaToolsModule : public ExternalModule {
 
 ExternalFunction* SchemaToolsModule::getExternalFunction(const String& localName)
 {
-	if (localName == "inst2xsd")
+  if (localName == "inst2xsd-internal")
 	{
 		return inst2xsd;
 	}
-	else if (localName == "xsd2inst")
+  else if (localName == "xsd2inst-internal")
 	{
 		return xsd2inst;
 	}
-	else if (localName == "find-xmlbeans")
-	{
-		return findXMLBeans;
-  }
 
 	return 0;
-}
-
-void FindXMLBeansFunction::throwError(std::string aName) const
-{
-  Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
-			"XMLBEANS-JAR-NOT-FOUND");
-
-  throw USER_EXCEPTION(lQName, aName);
-}
-
-ItemSequence_t FindXMLBeansFunction::evaluate(
-  const ExternalFunction::Arguments_t& args) const
-{
-  std::string lDirectorySeparator(File::getDirectorySeparator());
-	std::string lXMLBeansHome;
-  {
-		char* lXMLBeansHomeEnv = getenv("XMLBEANS_HOME");
-		if (lXMLBeansHomeEnv != 0)
-		{
-			lXMLBeansHome = lXMLBeansHomeEnv;
-    }
-#ifdef APPLE
-		else
-		{
-			// If Apache XMLBeans is installed with Mac Ports, XMLBeans
-			// is typicaly installed in /opt/local/share/java/xmlbeans,
-      // so we check here, if the installation directory can
-      // be found in this directory.
-			std::string lXMLBeansPath("/opt/local/share/java/xmlbeans/");
-			File_t lRootDir = File::createFile(lXMLBeansPath);
-			if (lRootDir->exists() && lRootDir->isDirectory())
-			{
-        DirectoryIterator_t lFiles = lRootDir->files();
-        std::string lFileName;
-				// The XMLBeans directory is in a subdirectory with the version
-        // number - so we check all subdirectories to get the final
-        // path.
-				while (lFiles->next(lFileName))
-				{
-					File_t lFile = File::createFile(lXMLBeansPath + lFileName);
-					if (lFile->isDirectory())
-					{
-            std::stringstream lStr(lFileName);
-            double lDirDouble = 0.0;
-						if (lStr >> lDirDouble)
-						{
-							if (lDirDouble != 0.0)
-							{
-								lXMLBeansHome = lXMLBeansPath + lFileName;
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-#endif
-  }
-	std::string lXMLBeansLibDir;
-  {
-		char* lEnv = getenv("XMLBEANS_LIB_DIR");
-		if (lEnv != 0)
-		{
-			lXMLBeansLibDir = lEnv;
-    }
-#ifdef LINUX
-    // on a Ubuntu installation, all required
-    // jar files should be in /usr/share/java
-		// if Apache XMLBeans is installed.
-		else
-		{
-			lXMLBeansLibDir = "/usr/share/java";
-    }
-#endif
-  }
-	// If neither a path to the XMLBeans install dir, nor a path
-  // to the jar files was found so far, we throw an exception.
-	if (lXMLBeansHome == "" && lXMLBeansLibDir == "")
-	{
-		throwError("None of the environment variables XMLBEANS_HOME and XMLBEANS_LIB_DIR have been set.");
-  }
-
-	std::string lXMLBeansJarFile;
-
-	{
-		// Here we look for the xmlbeans.jar file, which should be either in $XMLBEANS_HOME/build or
-    // in the directory, where all jar files are.
-		lXMLBeansJarFile = lXMLBeansHome + lDirectorySeparator + "build" +
-				lDirectorySeparator + "xmlbeans.jar";
-		std::string lXMLBeansJarFile1 = lXMLBeansJarFile;
-		File_t lJarFile = File::createFile(lXMLBeansJarFile);
-		if (!lJarFile->exists())
-		{
-			lXMLBeansJarFile = lXMLBeansLibDir + lDirectorySeparator + "xmlbeans.jar";
-			lJarFile = File::createFile(lXMLBeansJarFile);
-			if (!lJarFile->exists())
-			{
-				std::string errmsg = "Could not find xmlbeans.jar. If you are using ";
-				errmsg += "Ubuntu or Mac OS X, please make sure, ";
-				errmsg += "that you have installed it, else make sure, that you have ";
-				errmsg += "set the envroinment variable ";
-				errmsg += "XMLBEANS_HOME or XMLBEANS_LIB_DIR correctly. Tried '";
-				errmsg +=  lXMLBeansJarFile1;
-        errmsg += "' and '";
-				errmsg += lXMLBeansJarFile;
-        errmsg += "'.";
-        throwError(errmsg);
-      }
-    }
-  }
-
-  std::vector<Item> lClassPath;
-	lClassPath.push_back(theFactory->createString(lXMLBeansJarFile));
-
-	{
-		std::string lJarDir = lXMLBeansLibDir;
-
-		if (lXMLBeansHome != "")
-			lJarDir = lXMLBeansHome + lDirectorySeparator + "lib";
-
-		// This is a list of all jar files, Apache XMLBeans depends on.
-    std::list<std::string> lDeps;
-		/*lDeps.push_back("avalon-framework");
-    lDeps.push_back("batik-all");
-    lDeps.push_back("commons-io");
-    lDeps.push_back("commons-logging");
-    lDeps.push_back("serializer");
-    lDeps.push_back("xalan");
-		lDeps.push_back("xmlgraphics-commons");*/
-
-    File_t lJarDirF = File::createFile(lJarDir);
-    DirectoryIterator_t lFiles = lJarDirF->files();
-		std::string lFile;
-		size_t count = 0;
-
-    // We check for all files, if it is a potential dependency and add it to
-    // the result
-		while (lFiles->next(lFile))
-		{
-      // If the file is not a jar file, we don't do anything
-      if (lFile.substr(lFile.size() - 4, std::string::npos) != ".jar")
-        continue;
-
-			for (std::list<std::string>::iterator i = lDeps.begin(); i != lDeps.end(); ++i)
-			{
-        std::string lSub = lFile.substr(0, i->size());
-				if (lSub == *i)
-				{
-          std::string lFull = lJarDir + lDirectorySeparator + lFile;
-          File_t f = File::createFile(lFull);
-
-					if (f->exists() && !f->isDirectory())
-					{
-            lClassPath.push_back(theFactory->createString(lFull));
-            // We count all jar files we add to the dependencies.
-            ++count;
-            break;
-          }
-        }
-      }
-    }
-    // Last, we check if all dependencies are found
-		if (count < lDeps.size())
-		{
-      std::string errmsg = "Could not find ";
-      errmsg += lDeps.front();
-      throwError(errmsg);
-    }
-  }
-
-	return ItemSequence_t(new VectorItemSequence(lClassPath));
 }
 
 

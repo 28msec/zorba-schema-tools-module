@@ -42,7 +42,13 @@ ELSE (ZORBA_SUPPRESS_JAVA)
   
       INCLUDE_DIRECTORIES (${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2})
       INCLUDE_DIRECTORIES (${JAVA_INCLUDE_PATH})
+
+      DECLARE_ZORBA_SCHEMA (FILE schema-tools-options.xsd
+          URI "http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options")
+
       DECLARE_ZORBA_MODULE (URI "http://www.zorba-xquery.com/modules/schema-tools" VERSION 1.0 FILE "schema-tools.xq" LINK_LIBRARIES "${JAVA_JVM_LIBRARY}")
+
+
     ELSE (JNI_FOUND)
       IF (ZORBA_WITH_SCHEMATOOLS)
         MESSAGE(FATAL_ERROR "Could not find Java and/or JNI. Please install a JDK or compile Zorba with Schema-Tools support by setting ZORBA_WITH_SCHEMATOOLS to false.")
@@ -54,4 +60,5 @@ ELSE (ZORBA_SUPPRESS_JAVA)
     MESSAGE(STATUS "Building Zorba without Schema-Tools support.")
   ENDIF ()
 ENDIF(ZORBA_SUPPRESS_JAVA)
+
 MESSAGE(STATUS "")

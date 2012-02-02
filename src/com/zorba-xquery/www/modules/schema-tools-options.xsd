@@ -15,11 +15,13 @@
 ::
 -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  xmlns:sto="http://www.zorba-xquery.com/modules/schema-tools/schemma-tools-options"
-  targetNamespace="http://www.zorba-xquery.com/modules/schema-tools/schemma-tools-options"
+  xmlns:sto="http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options"
+  targetNamespace="http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options"
   elementFormDefault="qualified" attributeFormDefault="unqualified">
-  <xs:element name="options">
-    <xs:complexType>
+
+  <xs:element name="options" type="sto:optionsType"/>
+
+  <xs:complexType name="optionsType">
       <xs:all>
         <xs:element name="design" default="vbd" minOccurs="0">
           <xs:simpleType>
@@ -45,6 +47,6 @@
         <xs:element name="no-pvr" type="xs:boolean" default="false" minOccurs="0"/>
         <xs:element name="no-upa" type="xs:boolean" default="false" minOccurs="0"/>
       </xs:all>
-    </xs:complexType>
-  </xs:element>
+  </xs:complexType>
+
 </xs:schema>

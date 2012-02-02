@@ -36,10 +36,18 @@ xquery version "3.0";
 module namespace schema-tools = "http://www.zorba-xquery.com/modules/schema-tools";
 
 
+import schema namespace st-options = "http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options";
+
+(:~
+ : Import module for checking if options element is validated.
+ :)
+import module namespace schemaOptions = "http://www.zorba-xquery.com/modules/schema";
+
+
 declare namespace err = "http://www.w3.org/2005/xqt-errors";
 
 declare namespace ver = "http://www.zorba-xquery.com/options/versioning";
-declare option ver:module-version "0.1";
+declare option ver:module-version "1.0";
 
 
 
@@ -78,8 +86,29 @@ declare option ver:module-version "0.1";
  : @error schema-tools:JAVA-EXCEPTION If Apache XMLBeans throws an exception.
  :)
 declare function
-schema-tools:inst2xsd ($instances as element()+, $options as element())
-    as document-node()* external;
+schema-tools:inst2xsd ($instances as element()+,
+    $options as element(st-options:options)?)
+  as document-node()*
+{
+  let $validated-options :=
+    if(empty($options))
+    then
+      $options
+    else if(schemaOptions:is-validated($options))
+    then
+      $options
+    else
+      validate{$options}
+  return
+    schema-tools:inst2xsd-internal($instances, $validated-options)
+};
+
+
+declare %private function
+schema-tools:inst2xsd-internal( $instances as element()+,
+    $options as element(st-options:options, st-options:optionsType)? )
+  as document-node()* external;
+
 
 
 (:~
@@ -115,5 +144,26 @@ schema-tools:inst2xsd ($instances as element()+, $options as element())
  : @error schema-tools:JAVA-EXCEPTION If Apache XMLBeans throws an exception.
  :)
 declare function
-schema-tools:xsd2inst ($schema as element()+, $rootElementName as xs:string, $options)
-   as document-node() external;
+schema-tools:xsd2inst ($schemas as element()+, $rootElementName as xs:string,
+    $options as element(st-options:options)?)
+  as document-node()
+{
+  let $validated-options :=
+    if(empty($options))
+    then
+        $options
+    else if(schemaOptions:is-validated($options))
+    then
+        $options
+    else
+        validate{$options}
+  return
+    schema-tools:xsd2inst-internal($schemas, $rootElementName, $validated-options)
+};
+
+
+declare %private function
+schema-tools:xsd2inst-internal ($schemas as element()+,
+    $rootElementName as xs:string,
+    $options as element(st-options:options, st-options:optionsType)?)
+  as document-node() external;
