@@ -62,6 +62,20 @@ declare option ver:module-version "1.0";
  : Please consult the 
  : <a href="http://xmlbeans.apache.org/">official documentation for further information</a>.
  :
+ : Example:
+ :
+ :  import module namespace st = "http://www.zorba-xquery.com/modules/schema-tools";
+ :  declare namespace sto = "http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options";
+ :  let $instances := (<a><b/><c/></a>, <b/>, <c>ccc</c>)
+ :  let $options  := <sto:options>
+ :                     <sto:design>vbd</sto:design>
+ :                     <sto:simple-content-types>smart</sto:simple-content-types>
+ :                     <sto:use-enumeration>10</sto:use-enumeration>
+ :                   </sto:options>
+ :  return
+ :      st:inst2xsd($instances, $options)
+ :
+ :
  : @param $instances The XML instance elements that will define the schema.
  : @param $options The Inst2XSD options:
  :      * design: Choose the generated schema design
@@ -72,14 +86,12 @@ declare option ver:module-version "1.0";
  :         - smart (default): try to find out the right simple shema type
  :         - always-string: use xsd:string for all simple types
  :      * use-enumeration: - when there are multiple valid values in a list
- :         - 0 or less: never use enumeration
- :         - 1 or more (default 10): only if not more than the value - number option
+ :         - 1: never use enumeration
+ :         - 2 or more (default 10): only if not more than the value - number option
+ :      * verbose: - stdout verbose info
+ :         - true: - output type holder information
+ :         - false (default): no output
  :
- :  <options xmlns='http://www.zorba-xquery.com/modules/schema-tools/schemma-tools-options'>
- :    <design>vbd</design>
- :    <simple-content-types>smart</simple-content-types>
- :    <use-enumeration>10</use-enumeration>
- :  </options>
  :
  : @return The generated output document, representing a sample XMLSchema.
  : @error schema-tools:VM001 If zorba was unable to start the JVM.
@@ -118,26 +130,43 @@ schema-tools:inst2xsd-internal( $instances as element()+,
  :
  : Please consult the 
  : <a href="http://xmlbeans.apache.org/">official documentation for further information</a>.
+ :
  : Example:
  :
- :  let $inst := (<a><b/><c/></a>, <b/>, <c>ccc</c>)
- :  let $opt  := <xb:options>
- :                   <xb:design>rdd</xb:design>\
- :                   <xb:design>rdd</xb:design>\
- :                   <xb:design>rdd</xb:design>\
- :               </xb:options>
+ :  import module namespace st = "http://www.zorba-xquery.com/modules/schema-tools";
+ :  declare namespace sto = "http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options";
+ :  let $xsds  :=
+ :     ( <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+ :           attributeFormDefault="unqualified"
+ :           elementFormDefault="qualified">
+ :         <xs:element name="a" type="aType"/>
+ :         <xs:complexType name="aType">
+ :           <xs:sequence>
+ :             <xs:element type="xs:string" name="b"/>
+ :             <xs:element type="xs:string" name="c"/>
+ :           </xs:sequence>
+ :         </xs:complexType>
+ :       </xs:schema> )
+ :  let $options  := <sto:options>
+ :                     <sto:network-downloads>false</sto:network-downloads>
+ :                     <sto:no-pvr>false</sto:no-pvr>
+ :                     <sto:no-upa>false</sto:no-upa>
+ :                   </sto:options>
  :  return
- :      xb:inst2xsd($inst, $opt)
+ :      st:xsd2inst($xsds, "a", $options)
  :
  : @param $schema The XML Schema file names that define the schema type system.
  : @param $rootElementName The QName of the root element of the instance
  : @param $options Options:
- :       * network-downloads: boolean - if allowed to use network when resolving
- :                                      schema imports and includes
- :       * no-pvr: boolean - true to disable particle valid (restriction) rule,
- :                           false othervise
- :       * no-upa: boolean - true to disable unique particle attribution rule,
- :                           false othervise
+ :       * network-downloads: boolean (default false)
+ :             - true allowes XMLBeans to use network when resolving schema
+ :               imports and includes
+ :       * no-pvr: boolean (default false)
+ :             - true to disable particle valid (restriction) rule,
+ :               false othervise
+ :       * no-upa: boolean (default false)
+ :             - true to disable unique particle attribution rule,
+ :               false othervise
  :
  : @return The generated output document, representing a sample XML instance.
  : @error schema-tools:VM001 If zorba was unable to start the JVM.

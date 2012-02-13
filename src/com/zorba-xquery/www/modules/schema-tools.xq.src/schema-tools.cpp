@@ -34,6 +34,7 @@
 #include "JavaVMSingelton.h"
 
 #define SCHEMATOOLS_MODULE_NAMESPACE "http://www.zorba-xquery.com/modules/schema-tools"
+#define SCHEMATOOLS_OPTIONS_NAMESPACE "http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options"
 
 class JavaException {
 };
@@ -150,22 +151,24 @@ class STOptions
 public:
   typedef enum
   {
-    RUSSIAN_DOLL_DESIGN,
-    SALAMI_SLICE_DESIGN,
-    VENETIAN_BLIND_DESIGN,
+    RUSSIAN_DOLL_DESIGN = 1,
+    SALAMI_SLICE_DESIGN = 2,
+    VENETIAN_BLIND_DESIGN = 3,
   } design_t;
 
   typedef enum
   {
-    SMART_TYPES,
-    ALWAYS_STRING_TYPES,
+    SMART_TYPES = 1,
+    ALWAYS_STRING_TYPES = 2,
   } simple_content_types_t;
 
 
 private:
   int theDesign;
   int theSimpleContentType;
+  // useEnumeration NEVER = 1
   int theUseEnumeration;
+  bool theVerbose;
 
   bool theNetworkDownloads;
   bool theNoPVR;
@@ -174,7 +177,7 @@ private:
 public:
   STOptions() : theDesign(STOptions::VENETIAN_BLIND_DESIGN),
     theSimpleContentType(STOptions::SMART_TYPES),
-    theUseEnumeration(10),
+    theUseEnumeration(10), theVerbose(false),
     theNetworkDownloads(false), theNoPVR(false), theNoUPA(false)
   {}
 
@@ -193,6 +196,11 @@ public:
   int getUseEnumeration()
   {
     return theUseEnumeration;
+  }
+
+  bool isVerbose()
+  {
+    return theVerbose;
   }
 
   bool isNetworkDownloads()
@@ -281,6 +289,31 @@ Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
     if (hasOptions)
       options.parse(optionsItem, theFactory);
 
+
+    // make options object
+    jclass optClass = env->FindClass("org/apache/xmlbeans/impl/inst2xsd/Inst2XsdOptions");
+    CHECK_EXCEPTION(env);
+    jmethodID optConstrId = env->GetMethodID(optClass, "<init>", "()V" );
+    CHECK_EXCEPTION(env);
+    jobject optObj = env->NewObject(optClass, optConstrId);
+    CHECK_EXCEPTION(env);
+    jmethodID optSetDegignId = env->GetMethodID(optClass, "setDesign", "(I)V" );
+    CHECK_EXCEPTION(env);
+    env->CallVoidMethod(optObj, optSetDegignId, options.getDesign());
+    CHECK_EXCEPTION(env);
+    jmethodID optSetEnumId = env->GetMethodID(optClass, "setUseEnumerations", "(I)V" );
+    CHECK_EXCEPTION(env);
+    env->CallVoidMethod(optObj, optSetEnumId, options.getUseEnumeration());
+    CHECK_EXCEPTION(env);
+    jmethodID optSetSCId = env->GetMethodID(optClass, "setSimpleContentTypes", "(I)V" );
+    CHECK_EXCEPTION(env);
+    env->CallVoidMethod(optObj, optSetSCId, options.getSimpleContentType());
+    CHECK_EXCEPTION(env);
+    jmethodID optSetVerboseId = env->GetMethodID(optClass, "setVerbose", "(Z)V" );
+    CHECK_EXCEPTION(env);
+    env->CallVoidMethod(optObj, optSetVerboseId, options.isVerbose());
+    CHECK_EXCEPTION(env);
+
 		// Create String[]
 		jclass strCls = env->FindClass("Ljava/lang/String;");
 		CHECK_EXCEPTION(env);
@@ -297,11 +330,13 @@ Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
 		}
 
 		// Create a Inst2XsdHelper class
-		myClass = env->FindClass("Inst2XsdHelper");
+    myClass = env->FindClass("org/zorbaxquery/modules/schemaTools/Inst2XsdHelper");
 		CHECK_EXCEPTION(env);
-		myMethod = env->GetStaticMethodID(myClass, "inst2xsd", "([Ljava/lang/String;)[Ljava/lang/String;");
+    myMethod = env->GetStaticMethodID(myClass, "inst2xsd",
+        "([Ljava/lang/String;Lorg/apache/xmlbeans/impl/inst2xsd/Inst2XsdOptions;)[Ljava/lang/String;");
 		CHECK_EXCEPTION(env);
-		jobjectArray resStrArray = (jobjectArray) env->CallStaticObjectMethod(myClass, myMethod, jXmlStrArray);
+    jobjectArray resStrArray = (jobjectArray) env->CallStaticObjectMethod(myClass,
+        myMethod, jXmlStrArray, optObj);
 		CHECK_EXCEPTION(env);
 		//std::cout << "  CallStaticObjectMethod: '" << jXmlStrArray << "'" << std::endl; std::cout.flush();
 
@@ -385,17 +420,7 @@ Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
                            const zorba::StaticContext* aStaticContext,
                            const zorba::DynamicContext* aDynamicContext) const
 {
-  Item classPathItem;
-  // assemble classpath (list of path concatenated with ":" or ";")
-  Iterator_t lIter = args[2]->getIterator();
-  lIter->open();
-  std::ostringstream lClassPath;
-  while (lIter->next(classPathItem))
-  {
-    lClassPath << classPathItem.getStringValue() << File::getPathSeparator();
-  }
-
-  lIter->close();
+  Iterator_t lIter;
 
   jthrowable lException = 0;
   static JNIEnv* env;
@@ -469,6 +494,7 @@ Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
 
     // read input param 2: $options
     Item optionsItem;
+    STOptions options;
     lIter = args[2]->getIterator();
     lIter->open();
     bool isOpen = lIter->isOpen();
@@ -477,18 +503,37 @@ Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
       bool hasOptions = lIter->next(optionsItem);
       lIter->close();
 
-      STOptions options;
       if (hasOptions)
         options.parse(optionsItem, theFactory);
     }
 
+    // make options object
+    jclass optClass = env->FindClass("org/zorbaxquery/modules/schemaTools/Xsd2InstHelper$Xsd2InstOptions");
+    CHECK_EXCEPTION(env);
+    jmethodID optConstrId = env->GetMethodID(optClass, "<init>", "()V" );
+    CHECK_EXCEPTION(env);
+    jobject optObj = env->NewObject(optClass, optConstrId);
+    CHECK_EXCEPTION(env);
+    jmethodID optSetNetId = env->GetMethodID(optClass, "setNetworkDownloads", "(Z)V" );
+    CHECK_EXCEPTION(env);
+    env->CallVoidMethod(optObj, optSetNetId, options.isNetworkDownloads());
+    CHECK_EXCEPTION(env);
+    jmethodID optSetNoPVRId = env->GetMethodID(optClass, "setNopvr", "(Z)V" );
+    CHECK_EXCEPTION(env);
+    env->CallVoidMethod(optObj, optSetNoPVRId, options.isNoPVR());
+    CHECK_EXCEPTION(env);
+    jmethodID optSetNoUPAId = env->GetMethodID(optClass, "setNoupa", "(Z)V" );
+    CHECK_EXCEPTION(env);
+    env->CallVoidMethod(optObj, optSetNoUPAId, options.isNoUPA());
+    CHECK_EXCEPTION(env);
 
     // Create a Inst2XsdHelper class
-    jclass myClass = env->FindClass("Xsd2InstHelper");
+    jclass myClass = env->FindClass("org/zorbaxquery/modules/schemaTools/Xsd2InstHelper");
     CHECK_EXCEPTION(env);
-    jmethodID myMethod = env->GetStaticMethodID(myClass, "xsd2inst", "([Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    jmethodID myMethod = env->GetStaticMethodID(myClass, "xsd2inst",
+        "([Ljava/lang/String;Ljava/lang/String;Lorg/zorbaxquery/modules/schemaTools/Xsd2InstHelper$Xsd2InstOptions;)Ljava/lang/String;");
     CHECK_EXCEPTION(env);
-    jobject resStr = (jobjectArray) env->CallStaticObjectMethod(myClass, myMethod, jXmlStrArray, jStrParam2);
+    jobject resStr = (jobjectArray) env->CallStaticObjectMethod(myClass, myMethod, jXmlStrArray, jStrParam2, optObj);
     CHECK_EXCEPTION(env);
     //std::cout << "  CallStaticObjectMethod: '" << resStr << "'" << std::endl; std::cout.flush();
 
@@ -618,7 +663,7 @@ void STOptions::parse(Item optionsNode, ItemFactory *itemFactory)
   if(optionsNode.isNull())
     return;
 
-  if(!compareItemQName(optionsNode, "options", ""))
+  if(!compareItemQName(optionsNode, "options", SCHEMATOOLS_OPTIONS_NAMESPACE))
   {
     std::stringstream lErrorMessage;
     Item options_qname;
@@ -626,13 +671,13 @@ void STOptions::parse(Item optionsNode, ItemFactory *itemFactory)
     lErrorMessage << "Options field must be of element options instead of " << options_qname.getStringValue();
     Item errWrongParamQName;
     String errName("WrongParam");
-    errWrongParamQName = itemFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE, errName);
+    errWrongParamQName = itemFactory->createQName(SCHEMATOOLS_OPTIONS_NAMESPACE, errName);
     String errDescription(lErrorMessage.str());
     throw USER_EXCEPTION(errWrongParamQName, errDescription);
   }
 
   zorba::Item child_item;
-  if(getChild(optionsNode, "design", "", child_item))
+  if(getChild(optionsNode, "design", SCHEMATOOLS_OPTIONS_NAMESPACE, child_item))
   {
     String design_text = child_item.getStringValue();
     if ( design_text == "rdd" )
@@ -643,7 +688,7 @@ void STOptions::parse(Item optionsNode, ItemFactory *itemFactory)
       theDesign = VENETIAN_BLIND_DESIGN;
   }
 
-  if(getChild(optionsNode, "simple-content-types", "", child_item))
+  if(getChild(optionsNode, "simple-content-types", SCHEMATOOLS_OPTIONS_NAMESPACE, child_item))
   {
     String sct_text = child_item.getStringValue();
     if ( sct_text == "always-string" )
@@ -652,24 +697,53 @@ void STOptions::parse(Item optionsNode, ItemFactory *itemFactory)
       theSimpleContentType = SMART_TYPES;
   }
 
-  if(getChild(optionsNode, "use-enumeration", "", child_item))
+  if(getChild(optionsNode, "verbose", SCHEMATOOLS_OPTIONS_NAMESPACE, child_item))
   {
-    theUseEnumeration = child_item.getIntValue();
+    String sct_text = child_item.getStringValue();
+    if ( sct_text == "true" || sct_text == "1" )
+      theVerbose = true;
+    else
+      theVerbose = false;
   }
 
-  if(getChild(optionsNode, "network-downloads", "", child_item))
+  if(getChild(optionsNode, "use-enumeration", SCHEMATOOLS_OPTIONS_NAMESPACE, child_item))
   {
-    theNetworkDownloads = child_item.getBooleanValue();
+    String sct_text = child_item.getStringValue();
+    int ival = atoi(sct_text.c_str());
+    if (ival>1)
+      theUseEnumeration = ival;
+    else
+      theUseEnumeration = 1;
   }
 
-  if(getChild(optionsNode, "no-pvr", "", child_item))
+  if(getChild(optionsNode, "network-downloads", SCHEMATOOLS_OPTIONS_NAMESPACE, child_item))
   {
-    theNoPVR = child_item.getBooleanValue();
+    //theNetworkDownloads = child_item.getBooleanValue();
+    String sct_text = child_item.getStringValue();
+    if ( sct_text == "true" || sct_text == "1" )
+      theNetworkDownloads = true;
+    else
+      theNetworkDownloads = false;
   }
 
-  if(getChild(optionsNode, "no-pvr", "", child_item))
+  if(getChild(optionsNode, "no-pvr", SCHEMATOOLS_OPTIONS_NAMESPACE, child_item))
   {
-    theNoUPA = child_item.getBooleanValue();
+    //theNoPVR = child_item.getBooleanValue();
+    String sct_text = child_item.getStringValue();
+    if ( sct_text == "true" || sct_text == "1" )
+      theNetworkDownloads = true;
+    else
+      theNetworkDownloads = false;
+  }
+
+  if(getChild(optionsNode, "no-pvr", SCHEMATOOLS_OPTIONS_NAMESPACE, child_item))
+  {
+    //theNoUPA = child_item.getBooleanValue();
+    String sct_text = child_item.getStringValue();
+    if ( sct_text == "true" || sct_text == "1" )
+      theNetworkDownloads = true;
+    else
+      theNetworkDownloads = false;
   }
 }
 
