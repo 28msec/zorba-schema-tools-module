@@ -245,9 +245,7 @@ Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
 
 	try
   {
-    String cp = aStaticContext->getFullJVMClassPath();
-    //std::cout << "Inst2xsdFunction::evaluate: '" << cp << "'" << std::endl; std::cout.flush();
-    env = JavaVMSingelton::getInstance(cp.c_str())->getEnv();
+    env = JavaVMSingelton::getInstance(aStaticContext)->getEnv();
 
 		// Local variables
 		Zorba_SerializerOptions_t lOptions;
@@ -427,9 +425,7 @@ Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
 
   try
   {
-    String cp = aStaticContext->getFullJVMClassPath();
-    //std::cout << "Xsd2instFunction::evaluate: '" << cp << "'" << std::endl; std::cout.flush();
-    env = JavaVMSingelton::getInstance(cp.c_str())->getEnv();
+    env = JavaVMSingelton::getInstance(aStaticContext)->getEnv();
 
     //jstring outFotmatString = env->NewStringUTF(outputFormat.getStringValue().c_str());
 

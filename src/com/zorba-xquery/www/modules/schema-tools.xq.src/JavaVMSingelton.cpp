@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
+#include <fstream>
 #include <iostream>
+#include <istream>
 #include <string>
 #include <cstdlib>
 #include <cstring>
 #include <sstream>
 
 #include "JavaVMSingelton.h"
+#include <zorba/util/path.h>
+#include <zorba/util/file.h>
+#include <zorba/zorba.h>
+
 
 namespace zorba { namespace schematools {
 JavaVMSingelton* JavaVMSingelton::instance = NULL;
@@ -77,6 +83,16 @@ JavaVMSingelton* JavaVMSingelton::getInstance(const char* classPath)
   return instance;
 }
 
+JavaVMSingelton* JavaVMSingelton::getInstance(const zorba::StaticContext* aStaticContext)
+{
+  if (instance == NULL)
+  {
+    String cp = computeClassPath(aStaticContext);
+    instance = new JavaVMSingelton(cp.c_str());
+  }
+  return instance;
+}
+
 void JavaVMSingelton::destroyInstance() {
   delete instance;
 }
@@ -89,6 +105,75 @@ JavaVM* JavaVMSingelton::getVM()
 JNIEnv* JavaVMSingelton::getEnv()
 {
   return m_env;
+}
+
+
+String JavaVMSingelton::computeClassPath(const zorba::StaticContext* aStaticContext)
+{
+  String cp;
+
+  // get classpath from global Properties
+  PropertiesBase * properties = Zorba::getInstance(NULL)->getProperties();
+  // todo cezar properties->
+
+  std::vector<String> lCPV;
+  aStaticContext->getFullLibPath(lCPV);
+
+  String pathSeparator(filesystem_path::get_path_separator());
+  String dirSeparator(filesystem_path::get_directory_separator());
+
+  for (std::vector<String>::iterator lIter = lCPV.begin();
+       lIter != lCPV.end(); ++lIter)
+  {
+    //cp += pathSeparator + *lIter;
+
+    // verify it contains a jars dir
+    const filesystem_path baseFsPath((*lIter).str());
+    const filesystem_path jarsFsPath(std::string("jars"));
+    filesystem_path jarsDirPath(baseFsPath, jarsFsPath);
+
+    file jarsDir(jarsDirPath);
+
+    if ( jarsDir.exists() && jarsDir.is_directory())
+    {
+      std::vector<std::string> list;
+      jarsDir.lsdir(list);
+
+      for (std::vector<std::string>::iterator itemIter = list.begin();
+           itemIter != list.end(); ++itemIter)
+      {
+        filesystem_path itemLocalFS(*itemIter);
+        filesystem_path itemFS(jarsDirPath, itemLocalFS);
+        file itemFile(itemFS);
+        if ( itemFile.exists() && itemFile.is_file() )
+        {
+          std::string itemName = itemFile.get_path();
+          std::string suffix = "-classpath.txt";
+          size_t found;
+          found = itemName.rfind(suffix);
+          if (found!=std::string::npos &&
+              found + suffix.length() == itemName.length() )
+          {
+            std::auto_ptr<std::istream> pathFile;
+            pathFile.reset(new std::ifstream (itemName.c_str ()));
+            if (!pathFile->good() || pathFile->eof() )
+            {
+              std::cerr << "file {" << itemName << "} not found or not readable." << std::endl;
+              throw itemName;
+            }
+
+            // read file
+            char line[1024];
+            pathFile->getline(line, 1024);
+            cp += line;
+          }
+        }
+      }
+    }
+  }
+
+  std::cout << "Xsd2instFunction::evaluate: '" << cp << "'" << std::endl; std::cout.flush();
+  return cp;
 }
 
 }} // namespace zorba, xslfo
