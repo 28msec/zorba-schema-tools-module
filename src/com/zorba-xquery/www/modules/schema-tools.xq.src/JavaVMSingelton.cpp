@@ -164,15 +164,18 @@ String JavaVMSingelton::computeClassPath(const zorba::StaticContext* aStaticCont
 
             // read file
             char line[1024];
-            pathFile->getline(line, 1024);
-            cp += line;
+            while( !pathFile->eof() && !pathFile->bad() && !pathFile->fail())
+            {
+              pathFile->getline(line, sizeof(line));
+              cp += pathSeparator + line;
+            }
           }
         }
       }
     }
   }
 
-  std::cout << "Xsd2instFunction::evaluate: '" << cp << "'" << std::endl; std::cout.flush();
+  //std::cout << "Xsd2instFunction::evaluate: '" << cp << "'" << std::endl; std::cout.flush();
   return cp;
 }
 
