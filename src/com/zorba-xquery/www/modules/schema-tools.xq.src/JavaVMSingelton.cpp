@@ -113,8 +113,10 @@ String JavaVMSingelton::computeClassPath(const zorba::StaticContext* aStaticCont
   String cp;
 
   // get classpath from global Properties
-  PropertiesBase * properties = Zorba::getInstance(NULL)->getProperties();
-  // todo cezar properties->
+  PropertiesGlobal * properties = Zorba::getInstance(NULL)->getProperties();
+  std::string globalClassPath;
+  properties->getJVMClassPath(globalClassPath);
+  cp += globalClassPath;
 
   std::vector<String> lCPV;
   aStaticContext->getFullLibPath(lCPV);
@@ -175,7 +177,9 @@ String JavaVMSingelton::computeClassPath(const zorba::StaticContext* aStaticCont
     }
   }
 
-  //std::cout << "Xsd2instFunction::evaluate: '" << cp << "'" << std::endl; std::cout.flush();
+  properties->setJVMClassPath(cp.str());
+
+  std::cout << "Xsd2instFunction::evaluate: '" << cp << "'" << std::endl; std::cout.flush();
   return cp;
 }
 
