@@ -127,8 +127,6 @@ String JavaVMSingelton::computeClassPath(const zorba::StaticContext* aStaticCont
   for (std::vector<String>::iterator lIter = lCPV.begin();
        lIter != lCPV.end(); ++lIter)
   {
-    //cp += pathSeparator + *lIter;
-
     // verify it contains a jars dir
     const filesystem_path baseFsPath((*lIter).str());
     const filesystem_path jarsFsPath(std::string("jars"));
@@ -169,7 +167,17 @@ String JavaVMSingelton::computeClassPath(const zorba::StaticContext* aStaticCont
             while( !pathFile->eof() && !pathFile->bad() && !pathFile->fail())
             {
               pathFile->getline(line, sizeof(line));
-              cp += pathSeparator + line;
+              std::string lineStr(line);
+
+              if ( lineStr.size() == 0 )
+                continue;
+
+              //std::cout << "line: '" << lineStr << "'" << std::endl; std::cout.flush();
+
+              const std::string normalizedPath =
+                  filesystem_path::normalize_path( lineStr, jarsDirPath.get_path());
+
+              cp += pathSeparator + normalizedPath;
             }
           }
         }
@@ -179,7 +187,7 @@ String JavaVMSingelton::computeClassPath(const zorba::StaticContext* aStaticCont
 
   properties->setJVMClassPath(cp.str());
 
-  std::cout << "Xsd2instFunction::evaluate: '" << cp << "'" << std::endl; std::cout.flush();
+  //std::cout << "JavaVMSingelton::computeClassPath: '" << cp << "'" << std::endl; std::cout.flush();
   return cp;
 }
 
