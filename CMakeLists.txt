@@ -15,18 +15,50 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 PROJECT (zorba_schema-tools_module)
-SET (SCHEMA_TOOLS_VERSION 1.0)
 
-ENABLE_TESTING ()
-INCLUDE (CTest)
+IF (ZORBA_SUPPRESS_JAVA)
+  MESSAGE (STATUS "ZORBA_SUPPRESS_JNI is true - not searching for Java")
+ELSE (ZORBA_SUPPRESS_JAVA)
 
-SET_CMAKE_MODULE_PATH ()
+  MESSAGE (STATUS "Looking for JNI")
+  FIND_PACKAGE(JNI)
 
-FIND_PACKAGE (Zorba REQUIRED HINTS "${ZORBA_BUILD_DIR}")
-INCLUDE ("${Zorba_USE_FILE}")
+  MESSAGE (STATUS "Looking for Java")
+  FIND_PACKAGE(Java)
 
-ADD_TEST_DIRECTORY ("${CMAKE_SOURCE_DIR}/test")
-ADD_SUBDIRECTORY ("src")
-ADD_SUBDIRECTORY ("srcJava")
+  IF (JNI_FOUND)
 
-DONE_DECLARING_ZORBA_URIS ()
+    FIND_FILE( XMLBEANS_JAR NAMES xmlbeans.jar
+      PATHS /usr/share/java/ )
+
+    IF( EXISTS ${XMLBEANS_JAR} )
+
+      # if everything is found build this module
+      SET (SCHEMA_TOOLS_VERSION 1.0)
+
+      ENABLE_TESTING ()
+      INCLUDE (CTest)
+
+      SET_CMAKE_MODULE_PATH ()
+
+      FIND_PACKAGE (Zorba REQUIRED HINTS "${ZORBA_BUILD_DIR}")
+      INCLUDE ("${Zorba_USE_FILE}")
+
+      ADD_TEST_DIRECTORY ("${CMAKE_SOURCE_DIR}/test")
+      ADD_SUBDIRECTORY ("src")
+      ADD_SUBDIRECTORY ("srcJava")
+
+      DONE_DECLARING_ZORBA_URIS ()
+
+
+    ELSE( EXISTS ${XMLBEANS_JAR} )
+      MESSAGE (STATUS "xmlbeans.jar not found skiping schema-tools module")
+    ENDIF( EXISTS ${XMLBEANS_JAR} )
+
+  ELSE (JNI_FOUND)
+    MESSAGE(STATUS "Building Zorba without schema-tools module.")
+  ENDIF (JNI_FOUND)
+ENDIF(ZORBA_SUPPRESS_JAVA)
+MESSAGE(STATUS "")
+
+

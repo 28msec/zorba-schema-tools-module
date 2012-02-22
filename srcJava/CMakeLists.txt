@@ -34,7 +34,7 @@ file(GLOB_RECURSE JAVA_SOURCE_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.java")
 
 set( JAVA_CLASS_PATH
-       ${JAVA_CLASS_PATH}:/usr/share/java/xmlbeans.jar
+       ${JAVA_CLASS_PATH}:${XMLBEANS_JAR}
    )
 
 # Compile all java files
@@ -80,7 +80,7 @@ add_dependencies( ${JAR_NAME}  jarTarget)
 # add Jar dependencies
 DECLARE_ZORBA_JAR(FILE ${CMAKE_CURRENT_BINARY_DIR}/../${JAR_NAME})
 
-DECLARE_ZORBA_JAR(FILE /usr/share/java/xmlbeans.jar EXTERNAL)
+DECLARE_ZORBA_JAR(FILE ${XMLBEANS_JAR} EXTERNAL)
 #DECLARE_ZORBA_JAR(FILE ../${JAR_NAME} EXTERNAL)
 
 MESSAGE(STATUS "End srcJava")
