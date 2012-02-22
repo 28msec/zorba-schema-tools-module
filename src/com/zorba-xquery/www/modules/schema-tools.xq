@@ -196,12 +196,3 @@ schema-tools:xsd2inst-internal ($schemas as element()+,
     $rootElementName as xs:string,
     $options as element(st-options:options, st-options:optionsType)?)
   as document-node() external;
-
-
-(:
-declare %private function
-schema-tools:xsd2inst-internal ($schemas as element()+,
-    $rootElementName as xs:string,
-    $options as element(st-options:options)?)
-  as document-node() external;
-:)
