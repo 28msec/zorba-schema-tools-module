@@ -29,7 +29,7 @@ ELSE (ZORBA_SUPPRESS_JAVA)
   IF (JNI_FOUND)
 
     FIND_FILE( XMLBEANS_JAR NAMES xmlbeans.jar xbean.jar
-      PATHS /usr/share/java/ /usr/share/java/xmlbeans)
+      PATHS /usr/share/java/ /usr/share/java/xmlbeans/ )
 
     IF( EXISTS ${XMLBEANS_JAR} )
 

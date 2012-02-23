@@ -156,7 +156,9 @@ schema-tools:inst2xsd-internal( $instances as element()+,
  :      st:xsd2inst($xsds, "a", $options)
  :
  : @param $schema The XML Schema file names that define the schema type system.
- : @param $rootElementName The QName of the root element of the instance
+ : @param $rootElementName The LocalName of the root element of the instance.
+          If multiple target namespaces are used, first one found - using the
+          sequence order - will be used.
  : @param $options Options:
  :       * network-downloads: boolean (default false)
  :             - true allowes XMLBeans to use network when resolving schema
