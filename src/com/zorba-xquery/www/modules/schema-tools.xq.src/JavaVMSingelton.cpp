@@ -191,4 +191,4 @@ String JavaVMSingelton::computeClassPath(const zorba::StaticContext* aStaticCont
   return cp;
 }
 
-}} // namespace zorba, xslfo
+}} // namespace zorba, schematools
