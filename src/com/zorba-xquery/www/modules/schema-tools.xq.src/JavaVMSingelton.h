@@ -31,7 +31,6 @@ public:
   static JavaVMSingelton* getInstance(const char* classPath);
   static JavaVMSingelton* getInstance(const zorba::StaticContext* aStaticContext);
 
-  static void destroyInstance();
   virtual ~JavaVMSingelton();
   JavaVM* getVM();
   JNIEnv* getEnv();

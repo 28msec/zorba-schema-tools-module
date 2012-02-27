@@ -68,6 +68,7 @@ JavaVMSingelton::JavaVMSingelton(const char* classPath)
 JavaVMSingelton::~JavaVMSingelton()
 {
   if (instance) {
+    delete instance;
     instance = NULL;
   }
   m_vm->DestroyJavaVM();
@@ -90,11 +91,8 @@ JavaVMSingelton* JavaVMSingelton::getInstance(const zorba::StaticContext* aStati
     String cp = computeClassPath(aStaticContext);
     instance = new JavaVMSingelton(cp.c_str());
   }
-  return instance;
-}
 
-void JavaVMSingelton::destroyInstance() {
-  delete instance;
+  return instance;
 }
 
 JavaVM* JavaVMSingelton::getVM()

@@ -67,9 +67,7 @@ class Inst2xsdFunction : public ContextualExternalFunction
     {}
 
 		~Inst2xsdFunction()
-		{
-      JavaVMSingelton::destroyInstance();
-    }
+    {}
 
   public:
 		virtual String getURI() const
@@ -99,9 +97,7 @@ class Xsd2instFunction : public ContextualExternalFunction
 		{}
 
 		~Xsd2instFunction()
-		{
-			JavaVMSingelton::destroyInstance();
-		}
+    {}
 
 	public:
 		virtual String getURI() const
@@ -426,8 +422,6 @@ Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
   try
   {
     env = JavaVMSingelton::getInstance(aStaticContext)->getEnv();
-
-    //jstring outFotmatString = env->NewStringUTF(outputFormat.getStringValue().c_str());
 
     // Local variables
     std::ostringstream os;
