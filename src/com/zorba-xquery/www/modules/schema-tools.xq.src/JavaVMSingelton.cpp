@@ -28,11 +28,13 @@
 #include <zorba/zorba.h>
 
 
-namespace zorba { namespace schematools {
+namespace zorba { namespace jvm {
 JavaVMSingelton* JavaVMSingelton::instance = NULL;
 
 JavaVMSingelton::JavaVMSingelton(const char* classPath)
 {
+  std::cout << "JavaVMSingelton::JavaVMSingelton classPath: " << classPath << "\n"; std::cout.flush();
+
   memset(&args, 0, sizeof(args));
   jint r;
   jint nOptions = 2;
@@ -71,16 +73,54 @@ JavaVMSingelton::~JavaVMSingelton()
     delete instance;
     instance = NULL;
   }
-  m_vm->DestroyJavaVM();
-  delete[] awtOption;
-  delete[] classPathOption;
+  //m_vm->DestroyJavaVM();
+  if (awtOption)
+    delete[] awtOption;
+  if (classPathOption)
+    delete[] classPathOption;
 }
 
 JavaVMSingelton* JavaVMSingelton::getInstance(const char* classPath)
 {
-  if (instance == NULL) {
-    instance = new JavaVMSingelton(classPath);
+//#ifdef WIN32
+//  // If pointer to instance of JavaVMSingelton exists (true) then return instance pointer else look for
+//  // instance pointer in memory mapped pointer. If the instance pointer does not exist in
+//  // memory mapped pointer, return a newly created pointer to an instance of Abc.
+
+//  return instance ?
+//     instance : (instance = (JavaVMSingelton*) MemoryMappedPointers::getPointer("JavaVMSingelton")) ?
+//     instance : (instance = (JavaVMSingelton*) MemoryMappedPointers::createEntry("JavaVMSingelton",(void*)new JavaVMSingelton(classPath)));
+//#else
+
+
+  // If pointer to instance of JavaVMSingelton exists (true) then return instance pointer
+  // else return a newly created pointer to an instance of JavaVMSingelton.
+  if (instance == NULL)
+  {
+    JavaVM *jvms;
+    jsize nVMs;
+    if ( JNI_GetCreatedJavaVMs(&jvms, 1, &nVMs)==0 )
+    {
+      //std::cout << "Got JVMs " << nVMs << "\n"; std::cout.flush();
+      if (nVMs == 1)
+      {
+        JavaVM *jvm = jvms;
+        JNIEnv *env;
+        if( jvm->AttachCurrentThread((void **)&env, NULL) ==0 )
+        {
+          // if there is a jvm opened already by a diffrent dynamic lib
+          // make a singleton for this lib with that jvm
+          instance = new JavaVMSingelton(jvm, env);
+        }
+      }
+    }
+
+    if (instance == NULL)
+    {
+      instance = new JavaVMSingelton(classPath);
+    }
   }
+
   return instance;
 }
 
@@ -89,7 +129,7 @@ JavaVMSingelton* JavaVMSingelton::getInstance(const zorba::StaticContext* aStati
   if (instance == NULL)
   {
     String cp = computeClassPath(aStaticContext);
-    instance = new JavaVMSingelton(cp.c_str());
+    return getInstance(cp.c_str());
   }
 
   return instance;
@@ -189,4 +229,4 @@ String JavaVMSingelton::computeClassPath(const zorba::StaticContext* aStaticCont
   return cp;
 }
 
-}} // namespace zorba, schematools
+}} // namespace zorba, jvm

@@ -241,7 +241,7 @@ Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
 
 	try
   {
-    env = JavaVMSingelton::getInstance(aStaticContext)->getEnv();
+    env = zorba::jvm::JavaVMSingelton::getInstance(aStaticContext)->getEnv();
 
 		// Local variables
 		Zorba_SerializerOptions_t lOptions;
@@ -361,7 +361,7 @@ Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
 
 		return ItemSequence_t(new VectorItemSequence(vec));
 	}
-	catch (VMOpenException&)
+  catch (zorba::jvm::VMOpenException&)
 	{
 		Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
 				"VM001");
@@ -421,7 +421,7 @@ Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
 
   try
   {
-    env = JavaVMSingelton::getInstance(aStaticContext)->getEnv();
+    env = zorba::jvm::JavaVMSingelton::getInstance(aStaticContext)->getEnv();
 
     // Local variables
     std::ostringstream os;
@@ -541,7 +541,7 @@ Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
 
     return ItemSequence_t(new SingletonItemSequence(lRes));
   }
-  catch (VMOpenException&)
+  catch (zorba::jvm::VMOpenException&)
   {
     Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
                                           "VM001");

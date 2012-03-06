@@ -21,7 +21,7 @@
 #include <zorba/static_context.h>
 
 
-namespace zorba { namespace schematools {
+namespace zorba { namespace jvm {
 
 class VMOpenException {};
 
@@ -37,6 +37,7 @@ public:
 
 protected:
   JavaVMSingelton(const char* classPath);
+  JavaVMSingelton(JavaVM *jvm, JNIEnv *env) : m_vm(jvm), m_env(env) {}
   static String computeClassPath(const zorba::StaticContext* aStaticContext);
 
   static JavaVMSingelton* instance;
@@ -48,6 +49,6 @@ protected:
   char* classPathOption;
 };
 
-}} //namespace zorba, schematools
+}} //namespace zorba, jvm
 
 #endif // JAVA_VM_SINGELTON
