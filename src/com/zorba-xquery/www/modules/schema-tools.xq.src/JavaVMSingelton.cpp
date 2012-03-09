@@ -33,7 +33,7 @@ JavaVMSingelton* JavaVMSingelton::instance = NULL;
 
 JavaVMSingelton::JavaVMSingelton(const char* classPath)
 {
-  std::cout << "JavaVMSingelton::JavaVMSingelton classPath: " << classPath << "\n"; std::cout.flush();
+  //std::cout << "JavaVMSingelton::JavaVMSingelton classPath: " << classPath << "\n"; std::cout.flush();
 
   memset(&args, 0, sizeof(args));
   jint r;
@@ -73,7 +73,7 @@ JavaVMSingelton::~JavaVMSingelton()
     delete instance;
     instance = NULL;
   }
-  //m_vm->DestroyJavaVM();
+  m_vm->DestroyJavaVM();
   if (awtOption)
     delete[] awtOption;
   if (classPathOption)

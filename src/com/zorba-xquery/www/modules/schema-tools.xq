@@ -99,6 +99,14 @@ declare option ver:module-version "1.0";
  : @return The generated output document, representing a sample XMLSchema.
  : @error schema-tools:VM001 If zorba was unable to start the JVM.
  : @error schema-tools:JAVA-EXCEPTION If Apache XMLBeans throws an exception.
+ : @example test/Queries/schema-tools/inst2xsd-opt1.xq
+ : @example test/Queries/schema-tools/inst2xsd-opt2.xq
+ : @example test/Queries/schema-tools/inst2xsd-opt3.xq
+ : @example test/Queries/schema-tools/inst2xsd-simple.xq
+ : @example test/Queries/schema-tools/inst2xsd-tns-default.xq
+ : @example test/Queries/schema-tools/inst2xsd-tns.xq
+ : @example test/Queries/schema-tools/inst2xsd-multiTns.xq
+ : @example test/Queries/schema-tools/inst2xsd-err1-badOpt.xq
  :)
 declare function
 schema-tools:inst2xsd ($instances as element()+,
@@ -181,6 +189,10 @@ schema-tools:inst2xsd-internal( $instances as element()+,
  : @return The generated output document, representing a sample XML instance.
  : @error schema-tools:VM001 If zorba was unable to start the JVM.
  : @error schema-tools:JAVA-EXCEPTION If Apache XMLBeans throws an exception.
+ : @example test/Queries/schema-tools/xsd2inst-opt1.xq
+ : @example test/Queries/schema-tools/xsd2inst-simple.xq
+ : @example test/Queries/schema-tools/xsd2inst-tns.xq
+ : @example test/Queries/schema-tools/xsd2inst-err1-badOpt.xq
  :)
 declare function
 schema-tools:xsd2inst ($schemas as element()+, $rootElementName as xs:string,
