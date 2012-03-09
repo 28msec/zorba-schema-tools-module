@@ -27,12 +27,18 @@ ELSE (ZORBA_SUPPRESS_JAVA)
   FIND_PACKAGE(Java)
 
   IF (JNI_FOUND)
-
-    FIND_FILE( XMLBEANS_JAR NAMES xmlbeans.jar xbean.jar
-      PATHS /usr/share/java/ /usr/share/java/xmlbeans/ )
-
+    IF (WIN32)
+      SET (XMLBEANS_PATH $ENV{XMLBEANS_HOME}\\lib)
+      FIND_FILE( XMLBEANS_JAR NAMES xmlbeans.jar xbean.jar
+        PATHS ${XMLBEANS_PATH} )
+      MESSAGE (STATUS "xmlbeans.jar looking path: " ${XMLBEANS_PATH} )
+    ELSE (WIN32)
+      FIND_FILE( XMLBEANS_JAR NAMES xmlbeans.jar xbean.jar
+        PATHS /usr/share/java/ /usr/share/java/xmlbeans/ )
+    ENDIF (WIN32)
     IF( EXISTS ${XMLBEANS_JAR} )
-
+      
+      MESSAGE (STATUS "xmlbeans.jar found at: " ${XMLBEANS_JAR} )
       # if everything is found build this module
       SET (SCHEMA_TOOLS_VERSION 1.0)
 
