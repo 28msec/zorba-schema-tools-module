@@ -16,7 +16,7 @@ let $xsd  :=
       </xs:sequence>
     </xs:complexType>
   </xs:schema>
-let $opt  := <sto:options/>
+let $opt  := <sto:xsd2inst-options/>
 return
     st:xsd2inst(($xsd), "a", $opt)
 

@@ -19,9 +19,10 @@
   targetNamespace="http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options"
   elementFormDefault="qualified" attributeFormDefault="unqualified">
 
-  <xs:element name="options" type="sto:optionsType"/>
+  <xs:element name="inst2xsd-options" type="sto:inst2xsdOptionsType"/>
+  <xs:element name="xsd2inst-options" type="sto:xsd2instOptionsType"/>
 
-  <xs:complexType name="optionsType">
+  <xs:complexType name="inst2xsdOptionsType">
       <xs:all>
         <xs:element name="design" default="vbd" minOccurs="0">
           <xs:simpleType>
@@ -43,12 +44,15 @@
         <xs:element name="use-enumeration" minOccurs="0"
             type="xs:int" default="10"/>
         <xs:element name="verbose" minOccurs="0"
-                type="xs:boolean" default="false"/>
+            type="xs:boolean" default="false"/>
+      </xs:all>
+  </xs:complexType>
 
+  <xs:complexType name="xsd2instOptionsType">
+      <xs:all>
         <xs:element name="network-downloads" type="xs:boolean" default="false" minOccurs="0"/>
         <xs:element name="no-pvr" type="xs:boolean" default="false" minOccurs="0"/>
         <xs:element name="no-upa" type="xs:boolean" default="false" minOccurs="0"/>
       </xs:all>
   </xs:complexType>
-
 </xs:schema>

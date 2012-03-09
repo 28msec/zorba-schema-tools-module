@@ -14,7 +14,7 @@ xquery version "3.0";
  : WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  : See the License for the specific language governing permissions and
  : limitations under the License.
-:)
+ :)
 (:~
  : Schema related tools
  : <br /> 
@@ -32,6 +32,7 @@ xquery version "3.0";
  : @see http://xmlbeans.apache.org/
  : @library <a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK - Java Development Kit</a>
  : @project data processing/metadata
+ : @library <a href="http://xmlbeans.apache.org/">Apache XMLBeans</a>
  :)
 module namespace schema-tools = "http://www.zorba-xquery.com/modules/schema-tools";
 
@@ -66,12 +67,12 @@ declare option ver:module-version "1.0";
  :      "http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options";
  :  let $instances := (<a><b/><c/></a>, <b/>, <c>ccc</c>)
  :  let $options  :=
- :     <sto:options xmlns:sto=
+ :     <sto:inst2xsd-options xmlns:sto=
  :       "http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options">
  :       <sto:design>vbd</sto:design>
  :       <sto:simple-content-types>smart</sto:simple-content-types>
  :       <sto:use-enumeration>10</sto:use-enumeration>
- :     </sto:options>
+ :     </sto:inst2xsd-options>
  :  return
  :      st:inst2xsd($instances, $options)
  :
@@ -110,7 +111,7 @@ declare option ver:module-version "1.0";
  :)
 declare function
 schema-tools:inst2xsd ($instances as element()+,
-    $options as element(st-options:options)?)
+    $options as element(st-options:inst2xsd-options)?)
   as document-node()*
 {
   let $validated-options :=
@@ -129,16 +130,17 @@ schema-tools:inst2xsd ($instances as element()+,
 
 declare %private function
 schema-tools:inst2xsd-internal( $instances as element()+,
-    $options as element(st-options:options, st-options:optionsType)? )
+    $options as element(st-options:inst2xsd-options, st-options:inst2xsdOptionsType)? )
   as document-node()* external;
 
 
 
 (:~
  : The xsd2inst function takes a set of XML Schema file names as input and the
- : name of the root element and
- : generates an element that reprezents one sample XML instance of the given
- : input schema files.
+ : local name of the root element and
+ : generates a document that reprezents one sample XML instance of the given
+ : input schema files. The local name is searched in schema files in the order
+ : of schemas parameter.
  : <br />
  : Please consult the
  : <a href="http://xmlbeans.apache.org/">official documentation for further
@@ -162,16 +164,16 @@ schema-tools:inst2xsd-internal( $instances as element()+,
  :         </xs:complexType>
  :       </xs:schema> )
  :  let $options :=
- :    <sto:options xmlns:sto=
+ :    <sto:xsd2inst-options xmlns:sto=
  :      "http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options">
  :      <sto:network-downloads>false</sto:network-downloads>
  :      <sto:no-pvr>false</sto:no-pvr>
  :      <sto:no-upa>false</sto:no-upa>
- :    </sto:options>
+ :    </sto:xsd2inst-options>
  :  return
  :      st:xsd2inst($xsds, "a", $options)
  : </pre><br />
- : @param $schema The XML Schema file names that define the schema type system.
+ : @param $schemas XSDSchema definitions
  : @param $rootElementName The LocalName of the root element of the instance.
  :        If multiple target namespaces are used, first one found - using the
  :        sequence order - will be used.
@@ -196,7 +198,7 @@ schema-tools:inst2xsd-internal( $instances as element()+,
  :)
 declare function
 schema-tools:xsd2inst ($schemas as element()+, $rootElementName as xs:string,
-    $options as element(st-options:options)?)
+    $options as element(st-options:xsd2inst-options)?)
   as document-node()
 {
   let $validated-options :=
@@ -216,5 +218,5 @@ schema-tools:xsd2inst ($schemas as element()+, $rootElementName as xs:string,
 declare %private function
 schema-tools:xsd2inst-internal ($schemas as element()+,
     $rootElementName as xs:string,
-    $options as element(st-options:options, st-options:optionsType)?)
+    $options as element(st-options:xsd2inst-options, st-options:xsd2instOptionsType)?)
   as document-node() external;

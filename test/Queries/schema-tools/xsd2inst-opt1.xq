@@ -16,11 +16,11 @@ let $xsd  :=
       </xs:sequence>
     </xs:complexType>
   </xs:schema>
-let $opt  := <sto:options>
+let $opt  := <sto:xsd2inst-options>
                  <sto:network-downloads>true</sto:network-downloads>
                  <sto:no-pvr>false</sto:no-pvr>
                  <sto:no-upa>true</sto:no-upa>
-             </sto:options>
+             </sto:xsd2inst-options>
 return
     st:xsd2inst(($xsd), "a", $opt)
 

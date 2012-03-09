@@ -177,7 +177,8 @@ public:
     theNetworkDownloads(false), theNoPVR(false), theNoUPA(false)
   {}
 
-  void parse(Item optionsNode, ItemFactory *itemFactory);
+  void parseI(Item optionsNode, ItemFactory *itemFactory);
+  void parseX(Item optionsNode, ItemFactory *itemFactory);
 
   int getDesign()
   {
@@ -281,7 +282,7 @@ Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
 
     STOptions options;
     if (hasOptions)
-      options.parse(optionsItem, theFactory);
+      options.parseI(optionsItem, theFactory);
 
 
     // make options object
@@ -494,7 +495,7 @@ Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
       lIter->close();
 
       if (hasOptions)
-        options.parse(optionsItem, theFactory);
+        options.parseX(optionsItem, theFactory);
     }
 
     // make options object
@@ -648,17 +649,19 @@ bool getChild(zorba::Iterator_t children, const char *localname, const char *ns,
   return false;
 }
 
-void STOptions::parse(Item optionsNode, ItemFactory *itemFactory)
+void STOptions::parseI(Item optionsNode, ItemFactory *itemFactory)
 {
   if(optionsNode.isNull())
     return;
 
-  if(!compareItemQName(optionsNode, "options", SCHEMATOOLS_OPTIONS_NAMESPACE))
+  if(!compareItemQName(optionsNode, "inst2xsd-options", SCHEMATOOLS_OPTIONS_NAMESPACE) )
   {
     std::stringstream lErrorMessage;
     Item options_qname;
     optionsNode.getNodeName(options_qname);
-    lErrorMessage << "Options field must be of element options instead of " << options_qname.getStringValue();
+    lErrorMessage << "Options field must be of element 'inst2xsd-options' " <<
+                     "instead of '" <<
+                     options_qname.getStringValue() << "'. ";
     Item errWrongParamQName;
     String errName("WrongParam");
     errWrongParamQName = itemFactory->createQName(SCHEMATOOLS_OPTIONS_NAMESPACE, errName);
@@ -667,6 +670,7 @@ void STOptions::parse(Item optionsNode, ItemFactory *itemFactory)
   }
 
   zorba::Item child_item;
+
   if(getChild(optionsNode, "design", SCHEMATOOLS_OPTIONS_NAMESPACE, child_item))
   {
     String design_text = child_item.getStringValue();
@@ -705,6 +709,28 @@ void STOptions::parse(Item optionsNode, ItemFactory *itemFactory)
     else
       theUseEnumeration = 1;
   }
+}
+
+void STOptions::parseX(Item optionsNode, ItemFactory *itemFactory)
+{
+  if(optionsNode.isNull())
+    return;
+
+  if(!compareItemQName(optionsNode, "xsd2inst-options", SCHEMATOOLS_OPTIONS_NAMESPACE))
+  {
+    std::stringstream lErrorMessage;
+    Item options_qname;
+    optionsNode.getNodeName(options_qname);
+    lErrorMessage << "Options field must be of element 'xsd2inst-options' instead of '" <<
+                     options_qname.getStringValue() << "'";
+    Item errWrongParamQName;
+    String errName("WrongParam");
+    errWrongParamQName = itemFactory->createQName(SCHEMATOOLS_OPTIONS_NAMESPACE, errName);
+    String errDescription(lErrorMessage.str());
+    throw USER_EXCEPTION(errWrongParamQName, errDescription);
+  }
+
+  zorba::Item child_item;
 
   if(getChild(optionsNode, "network-downloads", SCHEMATOOLS_OPTIONS_NAMESPACE, child_item))
   {

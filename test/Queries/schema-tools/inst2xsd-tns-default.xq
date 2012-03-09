@@ -6,9 +6,9 @@ declare default element namespace "my.own.simple/tns";
 let $inst := (<a><b>1</b><c>c</c><c>cc</c></a>, 
               <b>2</b>, 
               <c>ccc</c>)
-let $opt  := <sto:options>
+let $opt  := <sto:inst2xsd-options>
                <sto:use-enumeration>1</sto:use-enumeration>
-             </sto:options>              
+             </sto:inst2xsd-options>              
 return
     st:inst2xsd($inst, $opt)
 
