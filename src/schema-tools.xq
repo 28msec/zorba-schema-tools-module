@@ -52,8 +52,8 @@ declare option ver:module-version "1.0";
 
 
 (:~
- : The inst2xsd function takes a set of sample instance elements as input and 
- : generates a schema element that reprezents one sample XML Schema that defines
+ : The inst2xsd function takes a set of sample XML instance elements as input and
+ : generates a set of sample XMLSchema documents that define
  : the content of the given input.
  : <br />
  : Please consult the 
@@ -78,7 +78,7 @@ declare option ver:module-version "1.0";
  :
  : </pre>
  : <br />
- : @param $instances The XML instance elements that will define the schema.
+ : @param $instances The input XML instance elements
  : @param $options The Inst2XSD options:<br />
  :    <ul>
  :      <li>design: Choose the generated schema design<br />
@@ -87,17 +87,17 @@ declare option ver:module-version "1.0";
  :         - vbd (default): Venetian Blind Design - local elements and global
  :                          complex types</li>
  :      <li>simple-content-types: type of leaf nodes<br />
- :         - smart (default): try to find out the right simple shema type<br />
+ :         - smart (default): try to find the right simple XMLSchema type<br />
  :         - always-string: use xsd:string for all simple types</li>
  :      <li>use-enumeration: - when there are multiple valid values in a list<br />
  :         - 1: never use enumeration<br />
- :         - 2 or more (default 10): only if not more than the value - number option</li>
+ :         - 2 or more (default 10): use enumeration if less than this number of occurrences - number option</li>
  :      <li>verbose: - stdout verbose info<br />
  :         - true: - output type holder information<br />
  :         - false (default): no output</li></ul>
  :
  :
- : @return The generated output document, representing a sample XMLSchema.
+ : @return The generated XMLSchema documents.
  : @error schema-tools:VM001 If zorba was unable to start the JVM.
  : @error schema-tools:JAVA-EXCEPTION If Apache XMLBeans throws an exception.
  : @example test/Queries/schema-tools/inst2xsd-opt1.xq
@@ -136,11 +136,11 @@ schema-tools:inst2xsd-internal( $instances as element()+,
 
 
 (:~
- : The xsd2inst function takes a set of XML Schema file names as input and the
+ : The xsd2inst function takes a set of XML Schema elements as input and the
  : local name of the root element and
- : generates a document that reprezents one sample XML instance of the given
- : input schema files. The local name is searched in schema files in the order
- : of schemas parameter.
+ : generates a document that represents one sample XML instance of the given
+ : input schemas. The local name is searched in schema global element definitions
+ : in the order of schemas parameter.
  : <br />
  : Please consult the
  : <a href="http://xmlbeans.apache.org/">official documentation for further
@@ -173,20 +173,20 @@ schema-tools:inst2xsd-internal( $instances as element()+,
  :  return
  :      st:xsd2inst($xsds, "a", $options)
  : </pre><br />
- : @param $schemas XSDSchema definitions
- : @param $rootElementName The LocalName of the root element of the instance.
+ : @param $schemas elements representing XMLSchema definitions
+ : @param $rootElementName The local name of the instance root element.
  :        If multiple target namespaces are used, first one found - using the
  :        sequence order - will be used.
  : @param $options Options:<br /><ul>
  :       <li>network-downloads: boolean (default false)<br />
- :             - true allowes XMLBeans to use network when resolving schema
+ :             - true allows XMLBeans to use network when resolving schema
  :               imports and includes</li>
  :       <li>no-pvr: boolean (default false)<br />
  :             - true to disable particle valid (restriction) rule,
- :               false othervise</li>
+ :               false otherwise</li>
  :       <li>no-upa: boolean (default false)<br />
  :             - true to disable unique particle attribution rule,
- :               false othervise</li></ul>
+ :               false otherwise</li></ul>
  :
  : @return The generated output document, representing a sample XML instance.
  : @error schema-tools:VM001 If zorba was unable to start the JVM.
