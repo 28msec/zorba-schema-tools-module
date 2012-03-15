@@ -16,17 +16,15 @@ xquery version "3.0";
  : limitations under the License.
  :)
 (:~
- : Schema related tools
- : <br /> 
- : This module uses Apache XMLBeans for inst2xsd and xsd2inst functions.
- : See <a href="http://xmlbeans.apache.org/">Apache XMLBeans documentation</a> for further information.
+ : This module provides funtionality to get sample XMLSchema from XML instances
+ : and sample XML instances from XMLSchema.
+ : <a href="http://xmlbeans.apache.org/">Apache XMLBeans</a> library is used to implement
+ : inst2xsd and xsd2inst functions.
  : <br />
  : <br />
- : <b>Note for Windows users</b>: On Windows, this module won't work out of the box, since
- : this module uses Java. But the Java VM dll is not in the system path by default. To make
- : this module work, you need to add the directory where the jvm.dll is located to the
- : system path. This dll is located at JRE_DIR\bin\client. On a standard installation, this would
- : be something a path like "C:\Program Files\Java\jre6\bin\client".
+ : <b>Note:</b>: Since this module has a Java library dependency a JVM required
+ : to be installed on the system. For Windows: jvm.dll is required on the system
+ : path ( usually located in "C:\Program Files\Java\jre6\bin\client".
  :
  : @author Cezar Andrei
  : @see http://xmlbeans.apache.org/
@@ -42,7 +40,7 @@ import schema namespace st-options = "http://www.zorba-xquery.com/modules/schema
 (:~
  : Import module for checking if options element is validated.
  :)
-import module namespace schemaOptions = "http://www.zorba-xquery.com/modules/schema";
+import module namespace schema-options = "http://www.zorba-xquery.com/modules/schema";
 
 
 declare namespace err = "http://www.w3.org/2005/xqt-errors";
@@ -79,7 +77,7 @@ declare option ver:module-version "1.0";
  : </pre>
  : <br />
  : @param $instances The input XML instance elements
- : @param $options The Inst2XSD options:<br />
+ : @param $options Options:<br />
  :    <ul>
  :      <li>design: Choose the generated schema design<br />
  :         - rdd: Russian Doll Design - local elements and local types<br />
@@ -98,7 +96,7 @@ declare option ver:module-version "1.0";
  :
  :
  : @return The generated XMLSchema documents.
- : @error schema-tools:VM001 If zorba was unable to start the JVM.
+ : @error schema-tools:VM001 If Zorba was unable to start the JVM.
  : @error schema-tools:JAVA-EXCEPTION If Apache XMLBeans throws an exception.
  : @example test/Queries/schema-tools/inst2xsd-opt1.xq
  : @example test/Queries/schema-tools/inst2xsd-opt2.xq
@@ -118,7 +116,7 @@ schema-tools:inst2xsd ($instances as element()+,
     if(empty($options))
     then
       $options
-    else if(schemaOptions:is-validated($options))
+    else if(schema-options:is-validated($options))
     then
       $options
     else
@@ -189,7 +187,7 @@ schema-tools:inst2xsd-internal( $instances as element()+,
  :               false otherwise</li></ul>
  :
  : @return The generated output document, representing a sample XML instance.
- : @error schema-tools:VM001 If zorba was unable to start the JVM.
+ : @error schema-tools:VM001 If Zorba was unable to start the JVM.
  : @error schema-tools:JAVA-EXCEPTION If Apache XMLBeans throws an exception.
  : @example test/Queries/schema-tools/xsd2inst-opt1.xq
  : @example test/Queries/schema-tools/xsd2inst-simple.xq
@@ -205,7 +203,7 @@ schema-tools:xsd2inst ($schemas as element()+, $rootElementName as xs:string,
     if(empty($options))
     then
         $options
-    else if(schemaOptions:is-validated($options))
+    else if(schema-options:is-validated($options))
     then
         $options
     else
