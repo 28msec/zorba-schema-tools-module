@@ -151,7 +151,7 @@ String JavaVMSingelton::computeClassPath(const zorba::StaticContext* aStaticCont
   String cp;
 
   // get classpath from global Properties
-  PropertiesGlobal * properties = Zorba::getInstance(NULL)->getProperties();
+  PropertiesGlobal * properties = Zorba::getInstance(NULL)->getPropertiesGlobal();
   std::string globalClassPath;
   properties->getJVMClassPath(globalClassPath);
   cp += globalClassPath;
