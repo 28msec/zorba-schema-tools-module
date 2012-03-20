@@ -22,7 +22,7 @@ xquery version "3.0";
  : inst2xsd and xsd2inst functions.
  : <br />
  : <br />
- : <b>Note:</b>: Since this module has a Java library dependency a JVM required
+ : <b>Note:</b> Since this module has a Java library dependency a JVM required
  : to be installed on the system. For Windows: jvm.dll is required on the system
  : path ( usually located in "C:\Program Files\Java\jre6\bin\client".
  :
