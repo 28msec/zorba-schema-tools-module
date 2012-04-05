@@ -34,14 +34,15 @@ file(GLOB_RECURSE JAVA_SOURCE_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.java")
 
 IF (WIN32)
-set( JAVA_CLASS_PATH
-       ${JAVA_CLASS_PATH};${XMLBEANS_JAR}
-   )
+  set( JAVA_CLASS_PATH
+    ${JAVA_CLASS_PATH};${XMLBEANS_JAR}
+    )
 ELSE (WIN32)
-set( JAVA_CLASS_PATH
-       ${JAVA_CLASS_PATH}:${XMLBEANS_JAR}
-   )
+  set( JAVA_CLASS_PATH
+    ${JAVA_CLASS_PATH}:${XMLBEANS_JAR}
+    )
 ENDIF (WIN32)
+
 # Compile all java files
 add_custom_target( ${PROJECT_NAME}.jar.classes
    COMMAND ${JAVA_COMPILE} -d ${CMAKE_CURRENT_BINARY_DIR}
@@ -49,43 +50,23 @@ add_custom_target( ${PROJECT_NAME}.jar.classes
            ${JAVA_SOURCE_FILES}
    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
    SOURCES ${JAVA_SOURCE_FILES})
-
 add_dependencies(${PROJECT_NAME}.jar.classes  ${JAVA_SOURCE_FILES})
 
 
-# find all class files, this is buggy can't relly on it
-#file(GLOB_RECURSE JAVA_CLASS_FILES
-#    RELATIVE ${CMAKE_CURRENT_BINARY_DIR}
-#    ${CMAKE_CURRENT_BINARY_DIR}/*.class)
 
 # jar all class files into a big jar
-#add_custom_command(
-#   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/../${JAR_NAME}
-#   COMMAND ${JAVA_ARCHIVE} cvf ../${JAR_NAME} org
-#   DEPENDS ${PROJECT_NAME}.jar.classes
-#   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} )
-
-#add_custom_target( ${JAR_NAME} ALL
-#   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../${JAR_NAME} )
-
-#add_dependencies( ${JAR_NAME}  ${PROJECT_NAME}.jar.classes)
-
-add_custom_target( jarTarget
-   COMMAND ${JAVA_ARCHIVE} cvf ../${JAR_NAME} org
-   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-add_dependencies(jarTarget  ${PROJECT_NAME}.jar.classes)
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${JAR_NAME}
+  COMMAND ${JAVA_ARCHIVE} cvf ${JAR_NAME} org
+  DEPENDS ${PROJECT_NAME}.jar.classes
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} )
 
 add_custom_target( ${JAR_NAME} ALL
-   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../${JAR_NAME} )
-add_dependencies( ${JAR_NAME}  jarTarget)
-
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${JAR_NAME} )
 
 # add Jar dependencies
-DECLARE_ZORBA_JAR(FILE ${CMAKE_CURRENT_BINARY_DIR}/../${JAR_NAME})
-
+DECLARE_ZORBA_JAR(FILE ${CMAKE_CURRENT_BINARY_DIR}/${JAR_NAME}
+  TARGET ${JAR_NAME})
 DECLARE_ZORBA_JAR(FILE ${XMLBEANS_JAR} EXTERNAL)
-#DECLARE_ZORBA_JAR(FILE ../${JAR_NAME} EXTERNAL)
 
 MESSAGE(STATUS "End srcJava")

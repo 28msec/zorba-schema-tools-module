@@ -31,7 +31,7 @@
 #include <zorba/vector_item_sequence.h>
 #include <zorba/zorba.h>
 
-#include "JavaVMSingelton.h"
+#include "JavaVMSingleton.h"
 
 #define SCHEMATOOLS_MODULE_NAMESPACE "http://www.zorba-xquery.com/modules/schema-tools"
 #define SCHEMATOOLS_OPTIONS_NAMESPACE "http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options"
@@ -242,7 +242,7 @@ Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
 
 	try
   {
-    env = zorba::jvm::JavaVMSingelton::getInstance(aStaticContext)->getEnv();
+    env = zorba::jvm::JavaVMSingleton::getInstance(aStaticContext)->getEnv();
 
 		// Local variables
 		Zorba_SerializerOptions_t lOptions;
@@ -422,7 +422,7 @@ Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
 
   try
   {
-    env = zorba::jvm::JavaVMSingelton::getInstance(aStaticContext)->getEnv();
+    env = zorba::jvm::JavaVMSingleton::getInstance(aStaticContext)->getEnv();
 
     // Local variables
     std::ostringstream os;
