@@ -25,15 +25,14 @@ IF (zorba_util-jvm_module_FOUND)
   IF (JNI_FOUND)
     INCLUDE_DIRECTORIES (${zorba_util-jvm_module_INCLUDE_DIRS})
 
-    IF (WIN32)
-      SET (XMLBEANS_PATH $ENV{XMLBEANS_HOME}\\lib)
-      FIND_FILE( XMLBEANS_JAR NAMES xmlbeans.jar xbean.jar
-	PATHS ${XMLBEANS_PATH} )
-      MESSAGE (STATUS "xmlbeans.jar looking path: " ${XMLBEANS_PATH} )
-    ELSE (WIN32)
-      FIND_FILE( XMLBEANS_JAR NAMES xmlbeans.jar xbean.jar
-	PATHS /usr/share/java/ /usr/share/java/xmlbeans/ )
-    ENDIF (WIN32)
+    SET (XMLBEANS_PATHS)
+    IF (NOT WIN32)
+      SET (XMLBEANS_PATHS /usr/share/java /usr/share/java/xmlbeans)
+    ENDIF (NOT WIN32)
+    FIND_FILE(XMLBEANS_JAR NAMES xmlbeans.jar xbean.jar
+      PATHS "$ENV{XMLBEANS_HOME}" ${XMLBEANS_PATHS}
+      PATH_SUFFIXES lib build/lib)
+
     IF( EXISTS ${XMLBEANS_JAR} )
       
       MESSAGE (STATUS "xmlbeans.jar found at: " ${XMLBEANS_JAR} )
