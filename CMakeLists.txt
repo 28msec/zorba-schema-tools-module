@@ -16,12 +16,14 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 PROJECT (zorba_schema-tools_module)
 
-# The util-jvm tool finds Java and JNI, so all standard cached JAVA_
-# variables will be set. util-jvm also caches Java_FOUND and JNI_FOUND
-# for us.
 FIND_PACKAGE (zorba_util-jvm_module QUIET)
 
 IF (zorba_util-jvm_module_FOUND)
+  FIND_PACKAGE(JNI)
+  FIND_PACKAGE(Java)
+  FIND_PACKAGE (Zorba REQUIRED HINTS "${ZORBA_BUILD_DIR}")
+  INCLUDE ("${Zorba_USE_FILE}")
+  
   IF (JNI_FOUND)
     INCLUDE_DIRECTORIES (${zorba_util-jvm_module_INCLUDE_DIRS})
 
