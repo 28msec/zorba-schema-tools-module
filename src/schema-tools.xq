@@ -29,8 +29,9 @@ xquery version "3.0";
  : @author Cezar Andrei
  : @see http://xmlbeans.apache.org/
  : @library <a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK - Java Development Kit</a>
- : @project data processing/metadata
  : @library <a href="http://xmlbeans.apache.org/">Apache XMLBeans</a>
+ : @see http://xmlbeans.apache.org
+ : @project Zorba/Data Processing/Schema Tools
  :)
 module namespace schema-tools = "http://www.zorba-xquery.com/modules/schema-tools";
 
@@ -58,8 +59,7 @@ declare option ver:module-version "1.0";
  : <a href="http://xmlbeans.apache.org/">official documentation for further
  : information</a>.
  : <br />
- : Example:<pre class="brush: xquery;">
- :
+ : Example:<pre class="ace-static" ace-mode="xquery"><![CDATA[
  :  import module namespace st = "http://www.zorba-xquery.com/modules/schema-tools";
  :  declare namespace sto =
  :      "http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options";
@@ -74,7 +74,7 @@ declare option ver:module-version "1.0";
  :  return
  :      st:inst2xsd($instances, $options)
  :
- : </pre>
+ : ]]></pre>
  : <br />
  : @param $instances The input XML instance elements
  : @param $options Options:<br />
@@ -144,8 +144,7 @@ schema-tools:inst2xsd-internal( $instances as element()+,
  : <a href="http://xmlbeans.apache.org/">official documentation for further
  :   information</a>.
  : <br />
- : Example:<pre class="brush: xquery;">
- :
+ : Example: <pre class="ace-static" ace-static="xquery"><![CDATA[
  :  import module namespace st = "http://www.zorba-xquery.com/modules/schema-tools";
  :  declare namespace sto =
  :      "http://www.zorba-xquery.com/modules/schema-tools/schema-tools-options";
@@ -170,7 +169,7 @@ schema-tools:inst2xsd-internal( $instances as element()+,
  :    </sto:xsd2inst-options>
  :  return
  :      st:xsd2inst($xsds, "a", $options)
- : </pre><br />
+ : ]]></pre><br />
  : @param $schemas elements representing XMLSchema definitions
  : @param $rootElementName The local name of the instance root element.
  :        If multiple target namespaces are used, first one found - using the
