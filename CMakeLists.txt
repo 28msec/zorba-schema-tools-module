@@ -17,12 +17,15 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT (zorba_schema-tools_module)
 
 FIND_PACKAGE (zorba_util-jvm_module QUIET)
+INCLUDE ("${zorba_util-jvm_module_USE_FILE}")
 
 IF (zorba_util-jvm_module_FOUND)
-  ZORBA_FIND_JNI()
-  FIND_PACKAGE(Java)
   FIND_PACKAGE (Zorba REQUIRED HINTS "${ZORBA_BUILD_DIR}")
   INCLUDE ("${Zorba_USE_FILE}")
+
+  SET_CMAKE_MODULE_PATH ()
+  FIND_PACKAGE(JNI)
+  FIND_PACKAGE(Java)
   
   IF (JNI_FOUND)
     INCLUDE_DIRECTORIES (${zorba_util-jvm_module_INCLUDE_DIRS})
