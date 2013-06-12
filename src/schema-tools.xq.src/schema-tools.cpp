@@ -66,14 +66,14 @@ class Inst2xsdFunction : public ContextualExternalFunction
       theDataManager(Zorba::getInstance(0)->getXmlDataManager())
     {}
 
-		~Inst2xsdFunction()
+    ~Inst2xsdFunction()
     {}
 
   public:
-		virtual String getURI() const
-		{ return theModule->getURI(); }
+    virtual String getURI() const
+    { return theModule->getURI(); }
 
-		virtual String getLocalName() const
+    virtual String getLocalName() const
     { return "inst2xsd-internal"; }
 
     virtual ItemSequence_t 
@@ -84,29 +84,29 @@ class Inst2xsdFunction : public ContextualExternalFunction
 
 class Xsd2instFunction : public ContextualExternalFunction
 {
-	private:
-		const ExternalModule* theModule;
-		ItemFactory* theFactory;
-		XmlDataManager* theDataManager;
+  private:
+    const ExternalModule* theModule;
+    ItemFactory* theFactory;
+    XmlDataManager* theDataManager;
 
-	public:
-		Xsd2instFunction(const ExternalModule* aModule) :
+  public:
+    Xsd2instFunction(const ExternalModule* aModule) :
       theModule(aModule),
       theFactory(Zorba::getInstance(0)->getItemFactory()),
-			theDataManager(Zorba::getInstance(0)->getXmlDataManager())
-		{}
-
-		~Xsd2instFunction()
+      theDataManager(Zorba::getInstance(0)->getXmlDataManager())
     {}
 
-	public:
-		virtual String getURI() const
-		{ return theModule->getURI(); }
+    ~Xsd2instFunction()
+    {}
 
-		virtual String getLocalName() const
+  public:
+    virtual String getURI() const
+    { return theModule->getURI(); }
+
+    virtual String getLocalName() const
     { return "xsd2inst-internal"; }
 
-		virtual ItemSequence_t
+    virtual ItemSequence_t
       evaluate(const ExternalFunction::Arguments_t& args,
                const zorba::StaticContext*,
                const zorba::DynamicContext*) const;
@@ -115,28 +115,28 @@ class Xsd2instFunction : public ContextualExternalFunction
 
 class SchemaToolsModule : public ExternalModule {
   private:
-		ExternalFunction* inst2xsd;
-		ExternalFunction* xsd2inst;
+    ExternalFunction* inst2xsd;
+    ExternalFunction* xsd2inst;
 
-	public:
+  public:
     SchemaToolsModule() :
-			inst2xsd(new Inst2xsdFunction(this)),
+      inst2xsd(new Inst2xsdFunction(this)),
       xsd2inst(new Xsd2instFunction(this))
-		{}
+    {}
 
-		~SchemaToolsModule()
-		{
-			delete inst2xsd;
-			delete xsd2inst;
+    ~SchemaToolsModule()
+    {
+      delete inst2xsd;
+      delete xsd2inst;
     }
 
-		virtual String getURI() const
-		{ return SCHEMATOOLS_MODULE_NAMESPACE; }
+    virtual String getURI() const
+    { return SCHEMATOOLS_MODULE_NAMESPACE; }
 
     virtual ExternalFunction* getExternalFunction(const String& localName);
 
-		virtual void destroy()
-		{
+    virtual void destroy()
+    {
       delete this;
     }
 };
@@ -220,15 +220,15 @@ public:
 ExternalFunction* SchemaToolsModule::getExternalFunction(const String& localName)
 {
   if (localName == "inst2xsd-internal")
-	{
-		return inst2xsd;
-	}
+  {
+    return inst2xsd;
+  }
   else if (localName == "xsd2inst-internal")
-	{
-		return xsd2inst;
-	}
+  {
+    return xsd2inst;
+  }
 
-	return 0;
+  return 0;
 }
 
 
@@ -237,41 +237,41 @@ Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
                            const zorba::StaticContext* aStaticContext,
                            const zorba::DynamicContext* aDynamincContext) const
 {
-	jthrowable lException = 0;
-	static JNIEnv* env;
+  jthrowable lException = 0;
+  static JNIEnv* env;
 
-	try
+  try
   {
     env = zorba::jvm::JavaVMSingleton::getInstance(aStaticContext)->getEnv();
 
-		// Local variables
-		Zorba_SerializerOptions_t lOptions;
-		lOptions.omit_xml_declaration = ZORBA_OMIT_XML_DECLARATION_YES;
-		Serializer_t lSerializer = Serializer::createSerializer(lOptions);
-		jclass myClass;
-		jmethodID myMethod;
+    // Local variables
+    Zorba_SerializerOptions_t lOptions;
+    lOptions.omit_xml_declaration = ZORBA_OMIT_XML_DECLARATION_YES;
+    Serializer_t lSerializer = Serializer::createSerializer(lOptions);
+    jclass myClass;
+    jmethodID myMethod;
 
-		// read input param 0
+    // read input param 0
     Iterator_t lIter = args[0]->getIterator();
-		lIter->open();
+    lIter->open();
 
-		Item item;
-		std::vector<jstring> xmlUtfVec;
+    Item item;
+    std::vector<jstring> xmlUtfVec;
 
-		while( lIter->next(item) )
-		{
-			// Searialize Item
-			std::ostringstream os;
-			SingletonItemSequence lSequence(item);
-			lSerializer->serialize(&lSequence, os);
-			std::string xmlString = os.str();
-			const char* xml = xmlString.c_str();
-			//std::cout << "  xmlString: '" << xml << "'" << std::endl; std::cout.flush();
-			xmlUtfVec.push_back( env->NewStringUTF(xml) );
-			CHECK_EXCEPTION(env);
-		}
+    while( lIter->next(item) )
+    {
+      // Searialize Item
+      std::ostringstream os;
+      SingletonItemSequence lSequence(item);
+      lSerializer->serialize(&lSequence, os);
+      std::string xmlString = os.str();
+      const char* xml = xmlString.c_str();
+      //std::cout << "  xmlString: '" << xml << "'" << std::endl; std::cout.flush();
+      xmlUtfVec.push_back( env->NewStringUTF(xml) );
+      CHECK_EXCEPTION(env);
+    }
 
-		lIter->close();
+    lIter->close();
 
     // read input parm 1: $options
     Item optionsItem;
@@ -309,103 +309,103 @@ Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
     env->CallVoidMethod(optObj, optSetVerboseId, options.isVerbose());
     CHECK_EXCEPTION(env);
 
-		// Create String[]
-		jclass strCls = env->FindClass("Ljava/lang/String;");
-		CHECK_EXCEPTION(env);
-		jobjectArray jXmlStrArray = env->NewObjectArray(xmlUtfVec.size(), strCls, NULL);
-		//std::cout << "  NewObjectArray: '" << jXmlStrArray << "'" << std::endl; std::cout.flush();
-		CHECK_EXCEPTION(env);
+    // Create String[]
+    jclass strCls = env->FindClass("Ljava/lang/String;");
+    CHECK_EXCEPTION(env);
+    jobjectArray jXmlStrArray = env->NewObjectArray(xmlUtfVec.size(), strCls, NULL);
+    //std::cout << "  NewObjectArray: '" << jXmlStrArray << "'" << std::endl; std::cout.flush();
+    CHECK_EXCEPTION(env);
 
-		for ( jsize i = 0; i<(jsize)xmlUtfVec.size(); i++)
-		{
-			env->SetObjectArrayElement(jXmlStrArray, i, xmlUtfVec[i]);
-			CHECK_EXCEPTION(env);
-			env->DeleteLocalRef((jstring)xmlUtfVec[i]);
-			CHECK_EXCEPTION(env);
-		}
+    for ( jsize i = 0; i<(jsize)xmlUtfVec.size(); i++)
+    {
+      env->SetObjectArrayElement(jXmlStrArray, i, xmlUtfVec[i]);
+      CHECK_EXCEPTION(env);
+      env->DeleteLocalRef((jstring)xmlUtfVec[i]);
+      CHECK_EXCEPTION(env);
+    }
 
-		// Create a Inst2XsdHelper class
+    // Create a Inst2XsdHelper class
     myClass = env->FindClass("org/zorbaxquery/modules/schemaTools/Inst2XsdHelper");
-		CHECK_EXCEPTION(env);
+    CHECK_EXCEPTION(env);
     myMethod = env->GetStaticMethodID(myClass, "inst2xsd",
         "([Ljava/lang/String;Lorg/apache/xmlbeans/impl/inst2xsd/Inst2XsdOptions;)[Ljava/lang/String;");
-		CHECK_EXCEPTION(env);
+    CHECK_EXCEPTION(env);
     jobjectArray resStrArray = (jobjectArray) env->CallStaticObjectMethod(myClass,
         myMethod, jXmlStrArray, optObj);
-		CHECK_EXCEPTION(env);
-		//std::cout << "  CallStaticObjectMethod: '" << jXmlStrArray << "'" << std::endl; std::cout.flush();
+    CHECK_EXCEPTION(env);
+    //std::cout << "  CallStaticObjectMethod: '" << jXmlStrArray << "'" << std::endl; std::cout.flush();
 
-		jsize resStrArraySize = env->GetArrayLength(resStrArray);
-		CHECK_EXCEPTION(env);
-		//std::cout << "  GetArrayLength: '" << resStrArraySize << "'" << std::endl; std::cout.flush();
-		std::vector<Item> vec;
+    jsize resStrArraySize = env->GetArrayLength(resStrArray);
+    CHECK_EXCEPTION(env);
+    //std::cout << "  GetArrayLength: '" << resStrArraySize << "'" << std::endl; std::cout.flush();
+    std::vector<Item> vec;
 
 
-		for( jsize i=0; i<resStrArraySize; i++)
-		{
-			jobject resStr = env->GetObjectArrayElement(resStrArray, i);
+    for( jsize i=0; i<resStrArraySize; i++)
+    {
+      jobject resStr = env->GetObjectArrayElement(resStrArray, i);
 
-			const char *str;
-			str = env->GetStringUTFChars( (jstring)resStr, NULL);
-			if ( str == NULL ) return NULL;
+      const char *str;
+      str = env->GetStringUTFChars( (jstring)resStr, NULL);
+      if ( str == NULL ) return NULL;
 
-			std::string lBinaryString(str);
+      std::string lBinaryString(str);
 
-			env->ReleaseStringUTFChars( (jstring)resStr, str);
-			//std::cout << "  lBinaryString '" << lBinaryString << "'" << std::endl; std::cout.flush();
+      env->ReleaseStringUTFChars( (jstring)resStr, str);
+      //std::cout << "  lBinaryString '" << lBinaryString << "'" << std::endl; std::cout.flush();
 
-			std::stringstream lStream(lBinaryString);
-			Item lRes = theDataManager->parseXML(lStream);
+      std::stringstream lStream(lBinaryString);
+      Item lRes = theDataManager->parseXML(lStream);
 
-			vec.push_back(lRes);
-		}
+      vec.push_back(lRes);
+    }
 
-		return ItemSequence_t(new VectorItemSequence(vec));
-	}
+    return ItemSequence_t(new VectorItemSequence(vec));
+  }
   catch (zorba::jvm::VMOpenException&)
-	{
-		Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
-				"VM001");
-		throw USER_EXCEPTION(lQName, "Could not start the Java VM (is the classpath set?)");
-	}
-	catch (JavaException&)
-	{
-		jclass stringWriterClass = env->FindClass("java/io/StringWriter");
-		jclass printWriterClass = env->FindClass("java/io/PrintWriter");
-		jclass throwableClass = env->FindClass("java/lang/Throwable");
-		jobject stringWriter = env->NewObject(
-				stringWriterClass,
-				env->GetMethodID(stringWriterClass, "<init>", "()V"));
+  {
+    Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
+        "VM001");
+    throw USER_EXCEPTION(lQName, "Could not start the Java VM (is the classpath set?)");
+  }
+  catch (JavaException&)
+  {
+    jclass stringWriterClass = env->FindClass("java/io/StringWriter");
+    jclass printWriterClass = env->FindClass("java/io/PrintWriter");
+    jclass throwableClass = env->FindClass("java/lang/Throwable");
+    jobject stringWriter = env->NewObject(
+        stringWriterClass,
+        env->GetMethodID(stringWriterClass, "<init>", "()V"));
 
-		jobject printWriter = env->NewObject(
-				printWriterClass,
-				env->GetMethodID(printWriterClass, "<init>", "(Ljava/io/Writer;)V"),
-				stringWriter);
+    jobject printWriter = env->NewObject(
+        printWriterClass,
+        env->GetMethodID(printWriterClass, "<init>", "(Ljava/io/Writer;)V"),
+        stringWriter);
 
-		env->CallObjectMethod(lException,
-				env->GetMethodID(throwableClass, "printStackTrace",
-						"(Ljava/io/PrintWriter;)V"),
-				printWriter);
+    env->CallObjectMethod(lException,
+        env->GetMethodID(throwableClass, "printStackTrace",
+            "(Ljava/io/PrintWriter;)V"),
+        printWriter);
 
-		//env->CallObjectMethod(printWriter, env->GetMethodID(printWriterClass, "flush", "()V"));
-		jmethodID toStringMethod =
-			env->GetMethodID(stringWriterClass, "toString", "()Ljava/lang/String;");
-		jobject errorMessageObj = env->CallObjectMethod(
-				stringWriter, toStringMethod);
-		jstring errorMessage = (jstring) errorMessageObj;
-		const char *errMsg = env->GetStringUTFChars(errorMessage, 0);
-		std::stringstream s;
-		s << "A Java Exception was thrown:" << std::endl << errMsg;
-		env->ReleaseStringUTFChars(errorMessage, errMsg);
-		std::string err("");
-		err += s.str();
-		env->ExceptionClear();
-		Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
-				"JAVA-EXCEPTION");
-		throw USER_EXCEPTION(lQName, err);
-	}
+    //env->CallObjectMethod(printWriter, env->GetMethodID(printWriterClass, "flush", "()V"));
+    jmethodID toStringMethod =
+      env->GetMethodID(stringWriterClass, "toString", "()Ljava/lang/String;");
+    jobject errorMessageObj = env->CallObjectMethod(
+        stringWriter, toStringMethod);
+    jstring errorMessage = (jstring) errorMessageObj;
+    const char *errMsg = env->GetStringUTFChars(errorMessage, 0);
+    std::stringstream s;
+    s << "A Java Exception was thrown:" << std::endl << errMsg;
+    env->ReleaseStringUTFChars(errorMessage, errMsg);
+    std::string err("");
+    err += s.str();
+    env->ExceptionClear();
+    Item lQName = theFactory->createQName(SCHEMATOOLS_MODULE_NAMESPACE,
+        "JAVA-EXCEPTION");
+    throw USER_EXCEPTION(lQName, err);
+  }
 
-	return ItemSequence_t(new EmptySequence());
+  return ItemSequence_t(new EmptySequence());
 }
 
 
@@ -775,3 +775,4 @@ extern "C" DLL_EXPORT zorba::ExternalModule* createModule()
 {
   return new zorba::schematools::SchemaToolsModule();
 }
+/* vim:set et sw=2 ts=2: */
