@@ -57,13 +57,11 @@ class Inst2xsdFunction : public ContextualExternalFunction
   private:
     const ExternalModule* theModule;
     ItemFactory* theFactory;
-    XmlDataManager* theDataManager;
 
   public:
     Inst2xsdFunction(const ExternalModule* aModule) :
       theModule(aModule),
-      theFactory(Zorba::getInstance(0)->getItemFactory()),
-      theDataManager(Zorba::getInstance(0)->getXmlDataManager())
+      theFactory(Zorba::getInstance(0)->getItemFactory())
     {}
 
     ~Inst2xsdFunction()
@@ -77,23 +75,22 @@ class Inst2xsdFunction : public ContextualExternalFunction
     { return "inst2xsd-internal"; }
 
     virtual ItemSequence_t 
-      evaluate(const ExternalFunction::Arguments_t& args,
-               const zorba::StaticContext*,
-               const zorba::DynamicContext*) const;
+    evaluate(const ExternalFunction::Arguments_t& args,
+             const zorba::StaticContext*,
+             const zorba::DynamicContext*) const;
 };
+
 
 class Xsd2instFunction : public ContextualExternalFunction
 {
   private:
     const ExternalModule* theModule;
     ItemFactory* theFactory;
-    XmlDataManager* theDataManager;
 
   public:
     Xsd2instFunction(const ExternalModule* aModule) :
       theModule(aModule),
-      theFactory(Zorba::getInstance(0)->getItemFactory()),
-      theDataManager(Zorba::getInstance(0)->getXmlDataManager())
+      theFactory(Zorba::getInstance(0)->getItemFactory())
     {}
 
     ~Xsd2instFunction()
@@ -355,7 +352,7 @@ Inst2xsdFunction::evaluate(const ExternalFunction::Arguments_t& args,
       //std::cout << "  lBinaryString '" << lBinaryString << "'" << std::endl; std::cout.flush();
 
       std::stringstream lStream(lBinaryString);
-      Item lRes = theDataManager->parseXML(lStream);
+      Item lRes = Zorba::getInstance(0)->getXmlDataManager()->parseXML(lStream);
 
       vec.push_back(lRes);
     }
@@ -538,7 +535,7 @@ Xsd2instFunction::evaluate(const ExternalFunction::Arguments_t& args,
     //std::cout << "  lBinaryString '" << lBinaryString << "'" << std::endl; std::cout.flush();
 
     std::stringstream lStream(lBinaryString);
-    Item lRes = theDataManager->parseXML(lStream);
+    Item lRes = Zorba::getInstance(0)->getXmlDataManager()->parseXML(lStream);
 
     return ItemSequence_t(new SingletonItemSequence(lRes));
   }
