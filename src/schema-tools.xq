@@ -41,7 +41,7 @@ import schema namespace st-options = "http://www.zorba-xquery.com/modules/schema
 (:~
  : Import module for checking if options element is validated.
  :)
-import module namespace schema-options = "http://www.zorba-xquery.com/modules/schema";
+import module namespace schema-options = "http://zorba.io/modules/schema";
 
 
 declare namespace err = "http://www.w3.org/2005/xqt-errors";
