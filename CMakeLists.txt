@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+MESSAGE(STATUS "")
+MESSAGE(STATUS "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+MESSAGE(STATUS "Configuring external module <schema-tools>")
+MESSAGE(STATUS "-------------------------------------------------------------")
+MESSAGE(STATUS "")
+
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 PROJECT (zorba_schema-tools_module)
@@ -57,15 +63,36 @@ IF (zorba_util-jvm_module_FOUND)
       ADD_SUBDIRECTORY ("srcJava")
       ADD_TEST_DIRECTORY("${PROJECT_SOURCE_DIR}/test")
       DONE_DECLARING_ZORBA_URIS ()
+      
+      MESSAGE(STATUS "")
+      MESSAGE(STATUS "-------------------------------------------------------------")
+      MESSAGE(STATUS "Configuration SUCCEEDED for external module <schema-tools>")
 
     ELSE( EXISTS ${XMLBEANS_JAR} )
       MESSAGE (STATUS "xmlbeans.jar not found; skipping schema-tools module.")
+      
+      MESSAGE(STATUS "")
+      MESSAGE(STATUS "-------------------------------------------------------------")  
+      MESSAGE(STATUS "Configuration FAILED for external module <schema-tools>")
+      
     ENDIF( EXISTS ${XMLBEANS_JAR} )
 
   ELSE (JNI_FOUND)
     MESSAGE (STATUS "Java and/or JNI not found; skipping schema-tools module.")
+    
+    MESSAGE(STATUS "")
+    MESSAGE(STATUS "-------------------------------------------------------------")  
+    MESSAGE(STATUS "Configuration FAILED for external module <schema-tools>")
+    
   ENDIF (JNI_FOUND)
 
 ELSE (zorba_util-jvm_module_FOUND)
   MESSAGE (STATUS "Zorba's util-jvm module not found; skipping schema-tools module.")
+  
+  MESSAGE(STATUS "")
+  MESSAGE(STATUS "-------------------------------------------------------------")  
+  MESSAGE(STATUS "Configuration FAILED for external module <schema-tools>")
+  
 ENDIF (zorba_util-jvm_module_FOUND)
+
+MESSAGE(STATUS "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
